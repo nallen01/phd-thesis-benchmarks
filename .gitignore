@@ -1,0 +1,10 @@
+c/**/*.a
+c/**/*.o
+c/**/out.csv
+
+c/*/cardiac_cell
+c/*/cardiac_grid
+c/*/nuclear_plant
+c/*/thermostat
+c/*/train_gate
+c/*/water_heater
