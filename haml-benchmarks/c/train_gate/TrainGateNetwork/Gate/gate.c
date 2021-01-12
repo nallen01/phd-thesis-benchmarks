@@ -6,7 +6,7 @@ void GateInit(Gate* me) {
     me->state = GATE_G1;
 
     // Initialise Outputs
-    me->position = 0;
+    me->position = 0.0;
 }
 
 // Gate Execution function
@@ -24,7 +24,7 @@ void GateRun(Gate* me) {
                 state_u = GATE_G2;
             }
             else if(!me->gate_request_up) {
-                position_u = me->position + ((0 - me->position) / 2) * STEP_SIZE;
+                position_u = me->position + ((0.0 - me->position) / 2.0) * STEP_SIZE;
 
                 // Remain in this state
                 state_u = GATE_G1;
@@ -36,7 +36,7 @@ void GateRun(Gate* me) {
                 state_u = GATE_G1;
             }
             else if(!me->gate_request_down) {
-                position_u = me->position + ((11 - me->position) / 2) * STEP_SIZE;
+                position_u = me->position + ((11.0 - me->position) / 2.0) * STEP_SIZE;
 
                 // Remain in this state
                 state_u = GATE_G2;

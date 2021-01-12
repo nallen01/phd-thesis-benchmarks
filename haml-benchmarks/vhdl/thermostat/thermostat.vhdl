@@ -45,24 +45,38 @@ begin
                 if temperature <= CREATE_FP(22.78) then
                     -- Next state is t2
                     state_update := THERMOSTAT_T2;
-            
+                
                 elsif temperature > CREATE_FP(22.78) then
                     -- Perform Flow Operations
                     temperature_update := temperature + FP_MULT((CREATE_FP(10.0) - temperature), step_size);
                     
-            
+                    -- Perform Saturation
+                    if temperature_update > CREATE_FP(22.78) and temperature < CREATE_FP(22.78) then
+                        -- Need to saturate temperature to CREATE_FP(22.78)
+                        temperature_update := CREATE_FP(22.78);
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = THERMOSTAT_T2 then -- Logic for state t2
                 if temperature >= CREATE_FP(25.0) then
                     -- Next state is t1
                     state_update := THERMOSTAT_T1;
-            
+                
                 elsif temperature < CREATE_FP(25.0) then
                     -- Perform Flow Operations
                     temperature_update := temperature + FP_MULT((CREATE_FP(37.78) - temperature), step_size);
                     
-            
+                    -- Perform Saturation
+                    if temperature_update < CREATE_FP(25.0) and temperature > CREATE_FP(25.0) then
+                        -- Need to saturate temperature to CREATE_FP(25.0)
+                        temperature_update := CREATE_FP(25.0);
+
+                    end if;
+                    
                 end if;
+
             end if;
 
             -- Map State

@@ -55,20 +55,20 @@ begin
                     
                     -- Next state is p2
                     state_update := PLANT_P2;
-            
+                
                 elsif add2_in then
                     -- Perform Update Operations
                     x_update := CREATE_FP(550.0);
                     
                     -- Next state is p3
                     state_update := PLANT_P3;
-            
+                
                 elsif not add1_in and not add2_in then
                     -- Perform Flow Operations
                     x_update := x + FP_MULT((FP_MULT(CREATE_FP(0.1), x) - CREATE_FP(50.0)), step_size);
                     
-            
                 end if;
+            
             elsif  state = PLANT_P2 then -- Logic for state p2
                 if remove1_in then
                     -- Perform Update Operations
@@ -76,13 +76,13 @@ begin
                     
                     -- Next state is p1
                     state_update := PLANT_P1;
-            
+                
                 elsif not remove1_in then
                     -- Perform Flow Operations
                     x_update := x + FP_MULT((FP_MULT(CREATE_FP(0.1), x) - CREATE_FP(56.0)), step_size);
                     
-            
                 end if;
+            
             elsif  state = PLANT_P3 then -- Logic for state p3
                 if remove2_in then
                     -- Perform Update Operations
@@ -90,13 +90,13 @@ begin
                     
                     -- Next state is p1
                     state_update := PLANT_P1;
-            
+                
                 elsif not remove2_in then
                     -- Perform Flow Operations
                     x_update := x + FP_MULT((FP_MULT(CREATE_FP(0.1), x) - CREATE_FP(60.0)), step_size);
                     
-            
                 end if;
+
             end if;
 
             -- Map State

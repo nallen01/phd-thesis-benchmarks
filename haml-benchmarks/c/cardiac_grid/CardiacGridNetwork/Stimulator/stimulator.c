@@ -6,10 +6,10 @@ void StimulatorInit(Stimulator* me) {
     me->state = STIMULATOR_COUNT;
 
     // Initialise Outputs
-    me->v = 0;
+    me->v = 0.0;
 
     // Initialise Internal Variables
-    me->t = 0;
+    me->t = 0.0;
 }
 
 // Stimulator Execution function
@@ -24,19 +24,19 @@ void StimulatorRun(Stimulator* me) {
     // Run the state machine for transition logic
     switch(me->state) {
         case STIMULATOR_COUNT: // Logic for state count
-            if(me->t >= 1) {
-                t_u = 0;
+            if(me->t >= 1.0) {
+                t_u = 0.0;
                 v_u = 131.1;
 
                 // Next state is stimulate
                 state_u = STIMULATOR_STIMULATE;
             }
-            else if(me->t < 1) {
-                t_u = me->t + 1 * STEP_SIZE;
+            else if(me->t < 1.0) {
+                t_u = me->t + 1.0 * STEP_SIZE;
 
-                if(t_u < 1 && me->t > 1) {
-                    // Need to saturate t to 1
-                    t_u = 1;
+                if(t_u < 1.0 && me->t > 1.0) {
+                    // Need to saturate t to 1.0
+                    t_u = 1.0;
                 }
 
                 // Remain in this state
@@ -45,14 +45,14 @@ void StimulatorRun(Stimulator* me) {
             break;
         case STIMULATOR_STIMULATE: // Logic for state stimulate
             if(me->t >= 0.01) {
-                t_u = 0;
-                v_u = 0;
+                t_u = 0.0;
+                v_u = 0.0;
 
                 // Next state is count
                 state_u = STIMULATOR_COUNT;
             }
             else if(me->t < 0.01) {
-                t_u = me->t + 1 * STEP_SIZE;
+                t_u = me->t + 1.0 * STEP_SIZE;
 
                 if(t_u < 0.01 && me->t > 0.01) {
                     // Need to saturate t to 0.01

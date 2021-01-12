@@ -72,12 +72,7 @@ begin
         );
 
     -- Perform Mapping
-    process(clk)
-    begin
-        if clk'event and clk = '1' then
-            temperature_out <= tank_temperature;
-            tank_burner_on <= burner_burner_on;
-            tank_burner_off <= burner_burner_off;
-        end if;
-    end process;
+    temperature_out <= tank_temperature;
+    tank_burner_on <= burner_burner_on;
+    tank_burner_off <= burner_burner_off;
 end architecture;

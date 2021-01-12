@@ -49,24 +49,24 @@ begin
                 if gate_request_up_in then
                     -- Next state is g2
                     state_update := GATE_G2;
-            
+                
                 elsif not gate_request_up_in then
                     -- Perform Flow Operations
                     position_update := position + FP_MULT((FP_DIV((CREATE_FP(0.0) - position), CREATE_FP(2.0))), step_size);
                     
-            
                 end if;
+            
             elsif  state = GATE_G2 then -- Logic for state g2
                 if gate_request_down_in then
                     -- Next state is g1
                     state_update := GATE_G1;
-            
+                
                 elsif not gate_request_down_in then
                     -- Perform Flow Operations
                     position_update := position + FP_MULT((FP_DIV((CREATE_FP(11.0) - position), CREATE_FP(2.0))), step_size);
                     
-            
                 end if;
+
             end if;
 
             -- Map State

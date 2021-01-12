@@ -61,7 +61,7 @@ begin
                     
                     -- Next state is b2
                     state_update := BURNER_B2;
-            
+                
                 elsif y < cycle_time then
                     -- Perform Flow Operations
                     y_update := y + FP_MULT(CREATE_FP(1.0), step_size);
@@ -70,8 +70,15 @@ begin
                     burner_on_update := true;
                     burner_off_update := false;
                     
-            
+                    -- Perform Saturation
+                    if (y_update > cycle_time and y < cycle_time) or (y_update < cycle_time and y > cycle_time) then
+                        -- Need to saturate y to cycle_time
+                        y_update := cycle_time;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = BURNER_B2 then -- Logic for state b2
                 if y = cycle_time then
                     -- Perform Update Operations
@@ -79,7 +86,7 @@ begin
                     
                     -- Next state is b1
                     state_update := BURNER_B1;
-            
+                
                 elsif y < cycle_time then
                     -- Perform Flow Operations
                     y_update := y + FP_MULT(CREATE_FP(1.0), step_size);
@@ -88,8 +95,15 @@ begin
                     burner_on_update := false;
                     burner_off_update := true;
                     
-            
+                    -- Perform Saturation
+                    if (y_update > cycle_time and y < cycle_time) or (y_update < cycle_time and y > cycle_time) then
+                        -- Need to saturate y to cycle_time
+                        y_update := cycle_time;
+
+                    end if;
+                    
                 end if;
+
             end if;
 
             -- Map State

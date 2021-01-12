@@ -75,15 +75,10 @@ begin
         );
 
     -- Perform Mapping
-    process(clk)
-    begin
-        if clk'event and clk = '1' then
-            plant_x_out <= plant_x;
-            plant_add1 <= controller_add1;
-            plant_remove1 <= controller_remove1;
-            plant_add2 <= controller_add2;
-            plant_remove2 <= controller_remove2;
-            controller_x <= plant_x;
-        end if;
-    end process;
+    plant_x_out <= plant_x;
+    plant_add1 <= controller_add1;
+    plant_remove1 <= controller_remove1;
+    plant_add2 <= controller_add2;
+    plant_remove2 <= controller_remove2;
+    controller_x <= plant_x;
 end architecture;

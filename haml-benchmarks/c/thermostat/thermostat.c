@@ -6,7 +6,7 @@ void ThermostatInit(Thermostat* me) {
     me->state = THERMOSTAT_T1;
 
     // Initialise Outputs
-    me->temperature = 20;
+    me->temperature = 20.0;
 }
 
 // thermostat Execution function
@@ -24,7 +24,7 @@ void ThermostatRun(Thermostat* me) {
                 state_u = THERMOSTAT_T2;
             }
             else if(me->temperature > 22.78) {
-                temperature_u = me->temperature + (10 - me->temperature) * STEP_SIZE;
+                temperature_u = me->temperature + (10.0 - me->temperature) * STEP_SIZE;
 
                 if(temperature_u > 22.78 && me->temperature < 22.78) {
                     // Need to saturate temperature to 22.78
@@ -36,16 +36,16 @@ void ThermostatRun(Thermostat* me) {
             }
             break;
         case THERMOSTAT_T2: // Logic for state t2
-            if(me->temperature >= 25) {
+            if(me->temperature >= 25.0) {
                 // Next state is t1
                 state_u = THERMOSTAT_T1;
             }
-            else if(me->temperature < 25) {
+            else if(me->temperature < 25.0) {
                 temperature_u = me->temperature + (37.78 - me->temperature) * STEP_SIZE;
 
-                if(temperature_u < 25 && me->temperature > 25) {
-                    // Need to saturate temperature to 25
-                    temperature_u = 25;
+                if(temperature_u < 25.0 && me->temperature > 25.0) {
+                    // Need to saturate temperature to 25.0
+                    temperature_u = 25.0;
                 }
 
                 // Remain in this state

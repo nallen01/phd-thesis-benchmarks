@@ -67,13 +67,8 @@ begin
         );
 
     -- Perform Mapping
-    process(clk)
-    begin
-        if clk'event and clk = '1' then
-            train_pos_out <= train_position;
-            gate_pos_out <= gate_position;
-            gate_gate_request_up <= train_gate_request_up;
-            gate_gate_request_down <= train_gate_request_down;
-        end if;
-    end process;
+    train_pos_out <= train_position;
+    gate_pos_out <= gate_position;
+    gate_gate_request_up <= train_gate_request_up;
+    gate_gate_request_down <= train_gate_request_down;
 end architecture;

@@ -6,7 +6,7 @@ void TankInit(Tank* me) {
     me->state = TANK_T1;
 
     // Initialise Outputs
-    me->temperature = 20;
+    me->temperature = 20.0;
 }
 
 // Tank Execution function
@@ -19,7 +19,7 @@ void TankRun(Tank* me) {
     // Run the state machine for transition logic
     switch(me->state) {
         case TANK_T1: // Logic for state t1
-            if(me->temperature == 100 && !me->burner_off) {
+            if(me->temperature == 100.0 && !me->burner_off) {
                 // Next state is t2
                 state_u = TANK_T2;
             }
@@ -27,12 +27,12 @@ void TankRun(Tank* me) {
                 // Next state is t3
                 state_u = TANK_T3;
             }
-            else if(me->temperature >= 20 && me->temperature < 100 && !me->burner_off) {
-                temperature_u = me->temperature + 0.075 * (150 - me->temperature) * STEP_SIZE;
+            else if(me->temperature >= 20.0 && me->temperature < 100.0 && !me->burner_off) {
+                temperature_u = me->temperature + 0.075 * (150.0 - me->temperature) * STEP_SIZE;
 
-                if((temperature_u > 100 && me->temperature < 100) || (temperature_u < 100 && me->temperature > 100)) {
-                    // Need to saturate temperature to 100
-                    temperature_u = 100;
+                if((temperature_u > 100.0 && me->temperature < 100.0) || (temperature_u < 100.0 && me->temperature > 100.0)) {
+                    // Need to saturate temperature to 100.0
+                    temperature_u = 100.0;
                 }
 
                 // Remain in this state
@@ -50,7 +50,7 @@ void TankRun(Tank* me) {
             }
             break;
         case TANK_T3: // Logic for state t3
-            if(me->temperature == 20 && !me->burner_on) {
+            if(me->temperature == 20.0 && !me->burner_on) {
                 // Next state is t4
                 state_u = TANK_T4;
             }
@@ -58,12 +58,12 @@ void TankRun(Tank* me) {
                 // Next state is t1
                 state_u = TANK_T1;
             }
-            else if(me->temperature > 20 && me->temperature <= 100 && !me->burner_on) {
+            else if(me->temperature > 20.0 && me->temperature <= 100.0 && !me->burner_on) {
                 temperature_u = me->temperature + -0.075 * me->temperature * STEP_SIZE;
 
-                if((temperature_u > 20 && me->temperature < 20) || (temperature_u < 20 && me->temperature > 20)) {
-                    // Need to saturate temperature to 20
-                    temperature_u = 20;
+                if((temperature_u > 20.0 && me->temperature < 20.0) || (temperature_u < 20.0 && me->temperature > 20.0)) {
+                    // Need to saturate temperature to 20.0
+                    temperature_u = 20.0;
                 }
 
                 // Remain in this state

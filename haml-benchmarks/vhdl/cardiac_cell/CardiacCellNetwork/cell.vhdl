@@ -127,7 +127,7 @@ begin
                     
                     -- Next state is q1
                     state_update := CELL_Q1;
-            
+                
                 elsif g_in >= v_t and (pacing_rate <= CREATE_FP(0.0) or t_auto < pacing_rate) then
                     -- Perform Update Operations
                     v_x_update := FP_MULT(CREATE_FP(0.3), v);
@@ -138,7 +138,7 @@ begin
                     
                     -- Next state is q1
                     state_update := CELL_Q1;
-            
+                
                 elsif v < v_t and g_in < v_t and (pacing_rate <= CREATE_FP(0.0) or t_auto < pacing_rate) then
                     -- Perform Flow Operations
                     v_x_update := v_x + FP_MULT(FP_MULT(c1, v_x), step_size);
@@ -150,8 +150,15 @@ begin
                     v_update := (v_x_update - v_y_update) + v_z_update;
                     resting_update := true;
                     
-            
+                    -- Perform Saturation
+                    if t_auto_update < pacing_rate and t_auto > pacing_rate then
+                        -- Need to saturate t_auto to pacing_rate
+                        t_auto_update := pacing_rate;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CELL_Q1 then -- Logic for state q1
                 if v = v_t or (pacing_rate > CREATE_FP(0.0) and t_auto >= pacing_rate) then
                     -- Perform Update Operations
@@ -160,11 +167,11 @@ begin
                     
                     -- Next state is q2
                     state_update := CELL_Q2;
-            
+                
                 elsif g_in <= CREATE_FP(0.0) and v < v_t and t_auto < pacing_rate then
                     -- Next state is q0
                     state_update := CELL_Q0;
-            
+                
                 elsif v < v_t and g_in > CREATE_FP(0.0) and (pacing_rate <= CREATE_FP(0.0) or t_auto < pacing_rate) then
                     -- Perform Flow Operations
                     v_x_update := v_x + FP_MULT((FP_MULT(c4, v_x) + FP_MULT(c7, g_in)), step_size);
@@ -175,8 +182,37 @@ begin
                     -- Perform Update Operations
                     v_update := (v_x_update - v_y_update) + v_z_update;
                     
-            
+                    -- Perform Saturation
+                    if (v_update > v_t and v < v_t) or (v_update < v_t and v > v_t) then
+                        -- Need to saturate v to v_t
+
+                        -- First, some dependencies need saturating
+                        v_x_update := v_x + FP_MULT((FP_DIV((v_t - v), (v_update - v))), (v_x_update - v_x));
+                        v_y_update := v_y + FP_MULT((FP_DIV((v_t - v), (v_update - v))), (v_y_update - v_y));
+                        v_z_update := v_z + FP_MULT((FP_DIV((v_t - v), (v_update - v))), (v_z_update - v_z));
+                        
+                        v_update := v_t;
+
+                    end if;
+                    if t_auto_update < pacing_rate and t_auto > pacing_rate then
+                        -- Need to saturate t_auto to pacing_rate
+                        t_auto_update := pacing_rate;
+
+                    end if;
+                    if v_update < v_t and v > v_t then
+                        -- Need to saturate v to v_t
+
+                        -- First, some dependencies need saturating
+                        v_x_update := v_x + FP_MULT((FP_DIV((v_t - v), (v_update - v))), (v_x_update - v_x));
+                        v_y_update := v_y + FP_MULT((FP_DIV((v_t - v), (v_update - v))), (v_y_update - v_y));
+                        v_z_update := v_z + FP_MULT((FP_DIV((v_t - v), (v_update - v))), (v_z_update - v_z));
+                        
+                        v_update := v_t;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CELL_Q2 then -- Logic for state q2
                 if v = v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta)) then
                     -- Perform Update Operations
@@ -184,7 +220,7 @@ begin
                     
                     -- Next state is q3
                     state_update := CELL_Q3;
-            
+                
                 elsif v < v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta)) then
                     -- Perform Flow Operations
                     v_x_update := v_x + FP_MULT(FP_MULT(c10, v_x), step_size);
@@ -196,13 +232,26 @@ begin
                     v_update := (v_x_update - v_y_update) + v_z_update;
                     stimulated_update := true;
                     
-            
+                    -- Perform Saturation
+                    if (v_update > v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta)) and v < v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta))) or (v_update < v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta)) and v > v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta))) then
+                        -- Need to saturate v to v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta))
+
+                        -- First, some dependencies need saturating
+                        v_x_update := v_x + FP_MULT((FP_DIV(((v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta))) - v), (v_update - v))), (v_x_update - v_x));
+                        v_y_update := v_y + FP_MULT((FP_DIV(((v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta))) - v), (v_update - v))), (v_y_update - v_y));
+                        v_z_update := v_z + FP_MULT((FP_DIV(((v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta))) - v), (v_update - v))), (v_z_update - v_z));
+                        
+                        v_update := v_o - FP_MULT(CREATE_FP(80.1), FP_SQRT(theta));
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CELL_Q3 then -- Logic for state q3
                 if v = v_r then
                     -- Next state is q0
                     state_update := CELL_Q0;
-            
+                
                 elsif v > v_r then
                     -- Perform Flow Operations
                     v_x_update := v_x + FP_MULT(FP_MULT(FP_MULT(c13, v_x), f_theta), step_size);
@@ -213,8 +262,21 @@ begin
                     -- Perform Update Operations
                     v_update := (v_x_update - v_y_update) + v_z_update;
                     
-            
+                    -- Perform Saturation
+                    if (v_update > v_r and v < v_r) or (v_update < v_r and v > v_r) then
+                        -- Need to saturate v to v_r
+
+                        -- First, some dependencies need saturating
+                        v_x_update := v_x + FP_MULT((FP_DIV((v_r - v), (v_update - v))), (v_x_update - v_x));
+                        v_y_update := v_y + FP_MULT((FP_DIV((v_r - v), (v_update - v))), (v_y_update - v_y));
+                        v_z_update := v_z + FP_MULT((FP_DIV((v_r - v), (v_update - v))), (v_z_update - v_z));
+                        
+                        v_update := v_r;
+
+                    end if;
+                    
                 end if;
+
             end if;
 
             -- Map State

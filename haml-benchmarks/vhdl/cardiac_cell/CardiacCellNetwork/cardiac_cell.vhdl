@@ -71,10 +71,5 @@ begin
         );
 
     -- Perform Mapping
-    process(clk)
-    begin
-        if clk'event and clk = '1' then
-            cell_v_out <= cell_v;
-        end if;
-    end process;
+    cell_v_out <= cell_v;
 end architecture;

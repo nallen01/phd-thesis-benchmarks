@@ -83,42 +83,56 @@ begin
                     
                     -- Next state is ST
                     state_update := CELL_ST;
-            
+                
                 elsif v = CREATE_FP(0.0) and g_in < v_t then
                     -- Perform Flow Operations
                     v_update := v + FP_MULT(CREATE_FP(0.0), step_size);
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
                 end if;
+            
             elsif  state = CELL_ST then -- Logic for state ST
                 if g_in <= CREATE_FP(0.0) and v < v_t then
                     -- Next state is RRP
                     state_update := CELL_RRP;
-            
+                
                 elsif v >= v_t then
                     -- Next state is UP
                     state_update := CELL_UP;
-            
+                
                 elsif v < v_t and g_in > CREATE_FP(0.0) then
                     -- Perform Flow Operations
                     v_update := v + FP_MULT(FP_MULT(c6, g_in), step_size);
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
+                    -- Perform Saturation
+                    if v_update < v_t and v > v_t then
+                        -- Need to saturate v to v_t
+                        v_update := v_t;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CELL_UP then -- Logic for state UP
                 if v >= v_omax - FP_MULT(CREATE_FP(80.0), theta) then
                     -- Next state is ERP
                     state_update := CELL_ERP;
-            
+                
                 elsif v < v_omax - FP_MULT(CREATE_FP(80.0), theta) then
                     -- Perform Flow Operations
                     v_update := v + FP_MULT(c1, step_size);
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
+                    -- Perform Saturation
+                    if v_update < v_omax - FP_MULT(CREATE_FP(80.0), theta) and v > v_omax - FP_MULT(CREATE_FP(80.0), theta) then
+                        -- Need to saturate v to v_omax - FP_MULT(CREATE_FP(80.0), theta)
+                        v_update := v_omax - FP_MULT(CREATE_FP(80.0), theta);
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CELL_ERP then -- Logic for state ERP
                 if v <= v_r then
                     -- Perform Update Operations
@@ -126,14 +140,21 @@ begin
                     
                     -- Next state is RRP
                     state_update := CELL_RRP;
-            
+                
                 elsif v > v_r then
                     -- Perform Flow Operations
                     v_update := v + FP_MULT(F(theta), step_size);
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
+                    -- Perform Saturation
+                    if v_update > v_r and v < v_r then
+                        -- Need to saturate v to v_r
+                        v_update := v_r;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CELL_RRP then -- Logic for state RRP
                 if g_in >= v_t then
                     -- Perform Update Operations
@@ -141,14 +162,14 @@ begin
                     
                     -- Next state is ST
                     state_update := CELL_ST;
-            
+                
                 elsif v > CREATE_FP(0.0) and g_in < v_t then
                     -- Perform Flow Operations
                     v_update := v + FP_MULT(c2, step_size);
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
                 end if;
+
             end if;
 
             -- Map State

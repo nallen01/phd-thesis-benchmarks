@@ -61,13 +61,20 @@ begin
                     
                     -- Next state is stimulate
                     state_update := STIMULATOR_STIMULATE;
-            
+                
                 elsif t < rate then
                     -- Perform Flow Operations
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
+                    -- Perform Saturation
+                    if t_update < rate and t > rate then
+                        -- Need to saturate t to rate
+                        t_update := rate;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = STIMULATOR_STIMULATE then -- Logic for state stimulate
                 if t >= pulse_width then
                     -- Perform Update Operations
@@ -76,13 +83,20 @@ begin
                     
                     -- Next state is count
                     state_update := STIMULATOR_COUNT;
-            
+                
                 elsif t < pulse_width then
                     -- Perform Flow Operations
                     t_update := t + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
+                    -- Perform Saturation
+                    if t_update < pulse_width and t > pulse_width then
+                        -- Need to saturate t to pulse_width
+                        t_update := pulse_width;
+
+                    end if;
+                    
                 end if;
+
             end if;
 
             -- Map State

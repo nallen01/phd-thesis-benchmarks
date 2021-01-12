@@ -60,13 +60,20 @@ begin
                     
                     -- Next state is t2
                     state_update := TRAIN_T2;
-            
+                
                 elsif position < CREATE_FP(5.0) then
                     -- Perform Flow Operations
                     position_update := position + FP_MULT(train_speed, step_size);
                     
-            
+                    -- Perform Saturation
+                    if (position_update > CREATE_FP(5.0) and position < CREATE_FP(5.0)) or (position_update < CREATE_FP(5.0) and position > CREATE_FP(5.0)) then
+                        -- Need to saturate position to CREATE_FP(5.0)
+                        position_update := CREATE_FP(5.0);
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = TRAIN_T2 then -- Logic for state t2
                 if position = CREATE_FP(15.0) then
                     -- Perform Update Operations
@@ -75,13 +82,20 @@ begin
                     
                     -- Next state is t3
                     state_update := TRAIN_T3;
-            
+                
                 elsif position >= CREATE_FP(5.0) and position < CREATE_FP(15.0) then
                     -- Perform Flow Operations
                     position_update := position + FP_MULT(train_speed, step_size);
                     
-            
+                    -- Perform Saturation
+                    if (position_update > CREATE_FP(15.0) and position < CREATE_FP(15.0)) or (position_update < CREATE_FP(15.0) and position > CREATE_FP(15.0)) then
+                        -- Need to saturate position to CREATE_FP(15.0)
+                        position_update := CREATE_FP(15.0);
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = TRAIN_T3 then -- Logic for state t3
                 if position = CREATE_FP(25.0) then
                     -- Perform Update Operations
@@ -91,13 +105,20 @@ begin
                     
                     -- Next state is t1
                     state_update := TRAIN_T1;
-            
+                
                 elsif position >= CREATE_FP(15.0) and position < CREATE_FP(25.0) then
                     -- Perform Flow Operations
                     position_update := position + FP_MULT(train_speed, step_size);
                     
-            
+                    -- Perform Saturation
+                    if (position_update > CREATE_FP(25.0) and position < CREATE_FP(25.0)) or (position_update < CREATE_FP(25.0) and position > CREATE_FP(25.0)) then
+                        -- Need to saturate position to CREATE_FP(25.0)
+                        position_update := CREATE_FP(25.0);
+
+                    end if;
+                    
                 end if;
+
             end if;
 
             -- Map State

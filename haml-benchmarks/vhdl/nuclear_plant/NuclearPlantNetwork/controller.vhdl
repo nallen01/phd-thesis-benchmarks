@@ -72,7 +72,7 @@ begin
                     
                     -- Next state is c2
                     state_update := CONTROLLER_C2;
-            
+                
                 elsif x_in > CREATE_FP(550.0) and y2 >= CREATE_FP(15.0) then
                     -- Perform Update Operations
                     add1_update := false;
@@ -82,14 +82,26 @@ begin
                     
                     -- Next state is c3
                     state_update := CONTROLLER_C3;
-            
+                
                 elsif x_in <= CREATE_FP(550.0) or (y1 < CREATE_FP(15.0) and y2 < CREATE_FP(15.0)) then
                     -- Perform Flow Operations
                     y1_update := y1 + FP_MULT(CREATE_FP(1.0), step_size);
                     y2_update := y2 + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
+                    -- Perform Saturation
+                    if y2_update < CREATE_FP(15.0) and y2 > CREATE_FP(15.0) then
+                        -- Need to saturate y2 to CREATE_FP(15.0)
+                        y2_update := CREATE_FP(15.0);
+
+                    end if;
+                    if y1_update < CREATE_FP(15.0) and y1 > CREATE_FP(15.0) then
+                        -- Need to saturate y1 to CREATE_FP(15.0)
+                        y1_update := CREATE_FP(15.0);
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = CONTROLLER_C2 then -- Logic for state c2
                 if x_in <= CREATE_FP(510.0) then
                     -- Perform Update Operations
@@ -101,14 +113,14 @@ begin
                     
                     -- Next state is c1
                     state_update := CONTROLLER_C1;
-            
+                
                 elsif x_in > CREATE_FP(510.0) then
                     -- Perform Flow Operations
                     y1_update := y1 + FP_MULT(CREATE_FP(1.0), step_size);
                     y2_update := y2 + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
                 end if;
+            
             elsif  state = CONTROLLER_C3 then -- Logic for state c3
                 if x_in <= CREATE_FP(510.0) then
                     -- Perform Update Operations
@@ -120,14 +132,14 @@ begin
                     
                     -- Next state is c1
                     state_update := CONTROLLER_C1;
-            
+                
                 elsif x_in > CREATE_FP(510.0) then
                     -- Perform Flow Operations
                     y1_update := y1 + FP_MULT(CREATE_FP(1.0), step_size);
                     y2_update := y2 + FP_MULT(CREATE_FP(1.0), step_size);
                     
-            
                 end if;
+
             end if;
 
             -- Map State

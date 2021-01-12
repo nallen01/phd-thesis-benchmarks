@@ -58,48 +58,62 @@ begin
                 if temperature = boil_temp and not burner_off_in then
                     -- Next state is t2
                     state_update := WATERTANK_T2;
-            
+                
                 elsif burner_off_in then
                     -- Next state is t3
                     state_update := WATERTANK_T3;
-            
+                
                 elsif temperature >= air_temp and temperature < boil_temp and not burner_off_in then
                     -- Perform Flow Operations
                     temperature_update := temperature + FP_MULT(FP_MULT(k, (heater_temp - temperature)), step_size);
                     
-            
+                    -- Perform Saturation
+                    if (temperature_update > boil_temp and temperature < boil_temp) or (temperature_update < boil_temp and temperature > boil_temp) then
+                        -- Need to saturate temperature to boil_temp
+                        temperature_update := boil_temp;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = WATERTANK_T2 then -- Logic for state t2
                 if burner_off_in then
                     -- Next state is t3
                     state_update := WATERTANK_T3;
-            
+                
                 elsif not burner_off_in then
-            
                 end if;
+            
             elsif  state = WATERTANK_T3 then -- Logic for state t3
                 if temperature = air_temp and not burner_on_in then
                     -- Next state is t4
                     state_update := WATERTANK_T4;
-            
+                
                 elsif burner_on_in then
                     -- Next state is t1
                     state_update := WATERTANK_T1;
-            
+                
                 elsif temperature > air_temp and temperature <= boil_temp and not burner_on_in then
                     -- Perform Flow Operations
                     temperature_update := temperature + FP_MULT(FP_MULT(-k, temperature), step_size);
                     
-            
+                    -- Perform Saturation
+                    if (temperature_update > air_temp and temperature < air_temp) or (temperature_update < air_temp and temperature > air_temp) then
+                        -- Need to saturate temperature to air_temp
+                        temperature_update := air_temp;
+
+                    end if;
+                    
                 end if;
+            
             elsif  state = WATERTANK_T4 then -- Logic for state t4
                 if burner_on_in then
                     -- Next state is t1
                     state_update := WATERTANK_T1;
-            
+                
                 elsif not burner_on_in then
-            
                 end if;
+
             end if;
 
             -- Map State

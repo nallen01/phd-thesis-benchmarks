@@ -10,7 +10,7 @@ void BurnerInit(Burner* me) {
     me->burner_off = false;
 
     // Initialise Internal Variables
-    me->y = 0;
+    me->y = 0.0;
 }
 
 // Burner Execution function
@@ -26,21 +26,21 @@ void BurnerRun(Burner* me) {
     // Run the state machine for transition logic
     switch(me->state) {
         case BURNER_B1: // Logic for state b1
-            if(me->y == 20) {
-                y_u = 0;
+            if(me->y == 20.0) {
+                y_u = 0.0;
 
                 // Next state is b2
                 state_u = BURNER_B2;
             }
-            else if(me->y < 20) {
-                y_u = me->y + 1 * STEP_SIZE;
+            else if(me->y < 20.0) {
+                y_u = me->y + 1.0 * STEP_SIZE;
 
                 burner_on_u = true;
                 burner_off_u = false;
 
-                if((y_u > 20 && me->y < 20) || (y_u < 20 && me->y > 20)) {
-                    // Need to saturate y to 20
-                    y_u = 20;
+                if((y_u > 20.0 && me->y < 20.0) || (y_u < 20.0 && me->y > 20.0)) {
+                    // Need to saturate y to 20.0
+                    y_u = 20.0;
                 }
 
                 // Remain in this state
@@ -48,21 +48,21 @@ void BurnerRun(Burner* me) {
             }
             break;
         case BURNER_B2: // Logic for state b2
-            if(me->y == 20) {
-                y_u = 0;
+            if(me->y == 20.0) {
+                y_u = 0.0;
 
                 // Next state is b1
                 state_u = BURNER_B1;
             }
-            else if(me->y < 20) {
-                y_u = me->y + 1 * STEP_SIZE;
+            else if(me->y < 20.0) {
+                y_u = me->y + 1.0 * STEP_SIZE;
 
                 burner_on_u = false;
                 burner_off_u = true;
 
-                if((y_u > 20 && me->y < 20) || (y_u < 20 && me->y > 20)) {
-                    // Need to saturate y to 20
-                    y_u = 20;
+                if((y_u > 20.0 && me->y < 20.0) || (y_u < 20.0 && me->y > 20.0)) {
+                    // Need to saturate y to 20.0
+                    y_u = 20.0;
                 }
 
                 // Remain in this state

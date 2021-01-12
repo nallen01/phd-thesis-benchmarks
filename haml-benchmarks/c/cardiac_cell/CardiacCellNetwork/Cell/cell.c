@@ -4,14 +4,14 @@ static double F(double theta) {
     if(theta >= 0.04) {
         return 4.03947;
     }
-    return 0.29 * exp(62.89 * theta) + 0.70 * exp(-10.99 * theta);
+    return 0.29 * exp(62.89 * theta) + 0.7 * exp(-10.99 * theta);
 }
 
 static double CalculatePacingRate() {
-    if(60 > 0) {
-        return 1 / (60 / 60.0);
+    if(60.0 > 0.0) {
+        return 1.0 / (60.0 / 60.0);
     }
-    return 0;
+    return 0.0;
 }
 
 
@@ -23,16 +23,16 @@ void CellInit(Cell* me) {
     // Initialise Outputs
     me->resting = true;
     me->stimulated = false;
-    me->v = 0;
+    me->v = 0.0;
 
     // Initialise Internal Variables
     me->pacing_rate = CalculatePacingRate();
-    me->t_auto = 0;
-    me->v_x = 0;
-    me->v_y = 0;
-    me->v_z = 0;
-    me->theta = 0;
-    me->f_theta = 0;
+    me->t_auto = 0.0;
+    me->v_x = 0.0;
+    me->v_y = 0.0;
+    me->v_z = 0.0;
+    me->theta = 0.0;
+    me->f_theta = 0.0;
 }
 
 // Cell Execution function
@@ -55,18 +55,18 @@ void CellRun(Cell* me) {
     // Run the state machine for transition logic
     switch(me->state) {
         case CELL_Q0: // Logic for state q0
-            if(me->pacing_rate > 0 && me->t_auto >= me->pacing_rate) {
-                v_x_u = (44.5 * 777200) / ((777200 - 58900) + 276600);
-                v_y_u = (44.5 * 58900) / ((777200 - 58900) + 276600);
-                v_z_u = (44.5 * 276600) / ((777200 - 58900) + 276600);
+            if(me->pacing_rate > 0.0 && me->t_auto >= me->pacing_rate) {
+                v_x_u = (44.5 * 777200.0) / ((777200.0 - 58900.0) + 276600.0);
+                v_y_u = (44.5 * 58900.0) / ((777200.0 - 58900.0) + 276600.0);
+                v_z_u = (44.5 * 276600.0) / ((777200.0 - 58900.0) + 276600.0);
                 v_u = 44.5;
-                theta_u = 0;
-                f_theta_u = F(0);
+                theta_u = 0.0;
+                f_theta_u = F(0.0);
 
                 // Next state is q1
                 state_u = CELL_Q1;
             }
-            else if(me->g >= 44.5 && (me->pacing_rate <= 0 || me->t_auto < me->pacing_rate)) {
+            else if(me->g >= 44.5 && (me->pacing_rate <= 0.0 || me->t_auto < me->pacing_rate)) {
                 v_x_u = 0.3 * me->v;
                 v_y_u = 0.0 * me->v;
                 v_z_u = 0.7 * me->v;
@@ -76,11 +76,11 @@ void CellRun(Cell* me) {
                 // Next state is q1
                 state_u = CELL_Q1;
             }
-            else if(me->v < 44.5 && me->g < 44.5 && (me->pacing_rate <= 0 || me->t_auto < me->pacing_rate)) {
+            else if(me->v < 44.5 && me->g < 44.5 && (me->pacing_rate <= 0.0 || me->t_auto < me->pacing_rate)) {
                 v_x_u = me->v_x + -8.7 * me->v_x * STEP_SIZE;
                 v_y_u = me->v_y + -190.9 * me->v_y * STEP_SIZE;
                 v_z_u = me->v_z + -190.4 * me->v_z * STEP_SIZE;
-                t_auto_u = me->t_auto + 1 * STEP_SIZE;
+                t_auto_u = me->t_auto + 1.0 * STEP_SIZE;
 
                 v_u = (v_x_u - v_y_u) + v_z_u;
                 resting_u = true;
@@ -95,25 +95,29 @@ void CellRun(Cell* me) {
             }
             break;
         case CELL_Q1: // Logic for state q1
-            if(me->v == 44.5 || (me->pacing_rate > 0 && me->t_auto >= me->pacing_rate)) {
-                t_auto_u = 0;
+            if(me->v == 44.5 || (me->pacing_rate > 0.0 && me->t_auto >= me->pacing_rate)) {
+                t_auto_u = 0.0;
                 resting_u = false;
 
                 // Next state is q2
                 state_u = CELL_Q2;
             }
-            else if(me->g <= 0 && me->v < 44.5 && me->t_auto < me->pacing_rate) {
+            else if(me->g <= 0.0 && me->v < 44.5 && me->t_auto < me->pacing_rate) {
                 // Next state is q0
                 state_u = CELL_Q0;
             }
-            else if(me->v < 44.5 && me->g > 0 && (me->pacing_rate <= 0 || me->t_auto < me->pacing_rate)) {
-                v_x_u = me->v_x + (-23.6 * me->v_x + 777200 * me->g) * STEP_SIZE;
-                v_y_u = me->v_y + (-45.5 * me->v_y + 58900 * me->g) * STEP_SIZE;
-                v_z_u = me->v_z + (-12.9 * me->v_z + 276600 * me->g) * STEP_SIZE;
-                t_auto_u = me->t_auto + 1 * STEP_SIZE;
+            else if(me->v < 44.5 && me->g > 0.0 && (me->pacing_rate <= 0.0 || me->t_auto < me->pacing_rate)) {
+                v_x_u = me->v_x + (-23.6 * me->v_x + 777200.0 * me->g) * STEP_SIZE;
+                v_y_u = me->v_y + (-45.5 * me->v_y + 58900.0 * me->g) * STEP_SIZE;
+                v_z_u = me->v_z + (-12.9 * me->v_z + 276600.0 * me->g) * STEP_SIZE;
+                t_auto_u = me->t_auto + 1.0 * STEP_SIZE;
 
                 v_u = (v_x_u - v_y_u) + v_z_u;
 
+                if(t_auto_u < me->pacing_rate && me->t_auto > me->pacing_rate) {
+                    // Need to saturate t_auto to me->pacing_rate
+                    t_auto_u = me->pacing_rate;
+                }
                 if(v_u < 44.5 && me->v > 44.5) {
                     // Need to saturate v to 44.5
                     // Also some dependencies that need saturating
@@ -124,10 +128,6 @@ void CellRun(Cell* me) {
                     v_z_u = me->v_z + frac * (v_z_u - me->v_z);
 
                     v_u = 44.5;
-                }
-                if(t_auto_u < me->pacing_rate && me->t_auto > me->pacing_rate) {
-                    // Need to saturate t_auto to me->pacing_rate
-                    t_auto_u = me->pacing_rate;
                 }
                 if((v_u > 44.5 && me->v < 44.5) || (v_u < 44.5 && me->v > 44.5)) {
                     // Need to saturate v to 44.5
@@ -156,7 +156,7 @@ void CellRun(Cell* me) {
                 v_x_u = me->v_x + -6.9 * me->v_x * STEP_SIZE;
                 v_y_u = me->v_y + 75.9 * me->v_y * STEP_SIZE;
                 v_z_u = me->v_z + 6826.5 * me->v_z * STEP_SIZE;
-                t_auto_u = me->t_auto + 1 * STEP_SIZE;
+                t_auto_u = me->t_auto + 1.0 * STEP_SIZE;
 
                 v_u = (v_x_u - v_y_u) + v_z_u;
                 stimulated_u = true;
@@ -178,28 +178,28 @@ void CellRun(Cell* me) {
             }
             break;
         case CELL_Q3: // Logic for state q3
-            if(me->v == 30) {
+            if(me->v == 30.0) {
                 // Next state is q0
                 state_u = CELL_Q0;
             }
-            else if(me->v > 30) {
+            else if(me->v > 30.0) {
                 v_x_u = me->v_x + -33.2 * me->v_x * me->f_theta * STEP_SIZE;
-                v_y_u = me->v_y + 20 * me->v_y * me->f_theta * STEP_SIZE;
-                v_z_u = me->v_z + 2 * me->v_z * STEP_SIZE;
-                t_auto_u = me->t_auto + 1 * STEP_SIZE;
+                v_y_u = me->v_y + 20.0 * me->v_y * me->f_theta * STEP_SIZE;
+                v_z_u = me->v_z + 2.0 * me->v_z * STEP_SIZE;
+                t_auto_u = me->t_auto + 1.0 * STEP_SIZE;
 
                 v_u = (v_x_u - v_y_u) + v_z_u;
 
-                if((v_u > 30 && me->v < 30) || (v_u < 30 && me->v > 30)) {
-                    // Need to saturate v to 30
+                if((v_u > 30.0 && me->v < 30.0) || (v_u < 30.0 && me->v > 30.0)) {
+                    // Need to saturate v to 30.0
                     // Also some dependencies that need saturating
-                    double frac = (30 - me->v) / (v_u - me->v);
+                    double frac = (30.0 - me->v) / (v_u - me->v);
 
                     v_x_u = me->v_x + frac * (v_x_u - me->v_x);
                     v_y_u = me->v_y + frac * (v_y_u - me->v_y);
                     v_z_u = me->v_z + frac * (v_z_u - me->v_z);
 
-                    v_u = 30;
+                    v_u = 30.0;
                 }
 
                 // Remain in this state
