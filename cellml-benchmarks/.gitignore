@@ -2,9 +2,11 @@ c/**/*.a
 c/**/*.o
 c/**/out.csv
 
-c/*/cardiac_cell
-c/*/cardiac_grid
-c/*/nuclear_plant
-c/*/thermostat
-c/*/train_gate
-c/*/water_heater
+c/*/hodgkin_huxley_1952
+c/*/hunter_mcculloch_terkeurs_1998
+c/*/luo_rudy_1994
+c/*/niederer_hunter_smith_2006
+c/*/smith_crampin_2004
+c/*/tentusscher_noble_noble_panfilov_2004_a
+c/*/uoa-myocite
+c/*/uoa-semilinear
