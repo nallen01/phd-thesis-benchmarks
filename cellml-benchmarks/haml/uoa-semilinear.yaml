@@ -1,0 +1,157 @@
+name: uoa_semilinear
+
+system:
+  outputs:
+    cell_v: REAL
+
+  definitions:
+    Cell:
+      inputs:
+        g: REAL
+      outputs:
+        v: REAL
+      parameters:
+        C1:
+          type: REAL
+          default: 29100
+        C2:
+          type: REAL
+          default: -1600
+        C3:
+          type: REAL
+          default: 0.0009988
+        C4:
+          type: REAL
+          default: -530
+        C5:
+          type: REAL
+          default: 120
+        C6:
+          type: REAL
+          default: 1000
+        vT:
+          type: REAL
+          default: 44.5
+        vR:
+          type: REAL
+          default: 30
+        vOmax:
+          type: REAL
+          default: 131.1
+      locations:
+        RP:
+          invariant: v == 0 && g < vT
+          flow:
+            v: 0
+            t: 1
+          transitions:
+            - to: ST
+              guard: g >= vT
+              update:
+                theta: C3 / t
+        ST:
+          invariant: v < vT && g > 0
+          flow:
+            v: C6 * g
+            t: 1
+          transitions:
+            - to: RRP
+              guard: g <= 0 && v < vT
+            - to: UP
+              guard: v >= vT
+        UP:
+          invariant: v < vOmax - 80 * theta
+          flow:
+            v: C1
+            t: 1
+          transitions:
+            - to: ERP
+              guard: v >= vOmax - 80 * theta
+        ERP:
+          invariant: v > vR
+          flow:
+            v: f(theta)
+            t: 1
+          transitions:
+            - to: RRP
+              guard: v <= vR
+              update:
+                t: 0
+        RRP:
+          invariant: v > 0 && g < vT
+          flow:
+            v: C2
+            t: 1
+          transitions:
+            - to: ST
+              guard: g >= vT
+              update:
+                theta: C3 / t
+      functions:
+        f:
+          inputs:
+            theta: REAL
+          logic: |
+            return C4 - C5 * theta
+      initialisation:
+        state: RP
+        valuations:
+          v: 0
+          t: 0
+
+    Stimulator:
+      outputs:
+        v: REAL
+      parameters:
+        rate:
+          type: REAL
+          default: 1
+        pulse_width:
+          type: REAL
+          default: 0.01
+        amplitude:
+          type: REAL
+          default: 131.1
+      locations:
+        count:
+          invariant: t < rate
+          flow:
+            t: 1
+          transitions:
+            - to: stimulate
+              guard: t >= rate
+              update:
+                t: 0
+                v: amplitude
+        stimulate:
+          invariant: t < pulse_width
+          flow:
+            t: 1
+          transitions:
+            - to: count
+              guard: t >= pulse_width
+              update:
+                t: 0
+                v: 0
+      initialisation:
+        state: count
+
+  instances:
+    Cell: Cell
+    Stimulator: Stimulator
+
+
+  mappings:
+    cell_v: Cell.v
+
+    Cell.g: Stimulator.v
+
+codegenConfig:
+  execution:
+    stepSize: 0.001
+    simulationTime: 100
+  logging:
+    enable: false
+  parametrisationMethod: COMPILE_TIME
+  maximumInterTransitions: 1
+  requireOneIntraTransitionPerTick: false

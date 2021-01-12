@@ -1,0 +1,1237 @@
+---
+name: tentusscher_2004_mcell
+system:
+  outputs:
+    environment_time: REAL
+    membrane_V: REAL
+    membrane_R: REAL
+    membrane_T: REAL
+    membrane_F: REAL
+    membrane_Cm: REAL
+    membrane_V_c: REAL
+    membrane_i_Stim: REAL
+    reversal_potentials_E_Na: REAL
+    reversal_potentials_E_K: REAL
+    reversal_potentials_E_Ks: REAL
+    reversal_potentials_E_Ca: REAL
+    inward_rectifier_potassium_current_i_K1: REAL
+    rapid_time_dependent_potassium_current_i_Kr: REAL
+    rapid_time_dependent_potassium_current_time_private: REAL
+    rapid_time_dependent_potassium_current_V_private: REAL
+    rapid_time_dependent_potassium_current_Xr1_gate_Xr1: REAL
+    rapid_time_dependent_potassium_current_Xr2_gate_Xr2: REAL
+    slow_time_dependent_potassium_current_i_Ks: REAL
+    slow_time_dependent_potassium_current_time_private: REAL
+    slow_time_dependent_potassium_current_V_private: REAL
+    slow_time_dependent_potassium_current_Xs_gate_Xs: REAL
+    fast_sodium_current_i_Na: REAL
+    fast_sodium_current_time_private: REAL
+    fast_sodium_current_V_private: REAL
+    fast_sodium_current_m_gate_m: REAL
+    fast_sodium_current_h_gate_h: REAL
+    fast_sodium_current_j_gate_j: REAL
+    sodium_background_current_i_b_Na: REAL
+    L_type_Ca_current_i_CaL: REAL
+    L_type_Ca_current_Ca_i_private: REAL
+    L_type_Ca_current_time_private: REAL
+    L_type_Ca_current_V_private: REAL
+    L_type_Ca_current_d: REAL
+    L_type_Ca_current_d_gate_d: REAL
+    L_type_Ca_current_f_gate_f: REAL
+    L_type_Ca_current_fCa_gate_fCa: REAL
+    calcium_background_current_i_b_Ca: REAL
+    transient_outward_current_i_to: REAL
+    transient_outward_current_V_private: REAL
+    transient_outward_current_time_private: REAL
+    transient_outward_current_s_gate_s: REAL
+    transient_outward_current_r_gate_r: REAL
+    sodium_potassium_pump_current_i_NaK: REAL
+    sodium_potassium_pump_current_V_private: REAL
+    sodium_calcium_exchanger_current_i_NaCa: REAL
+    calcium_pump_current_i_p_Ca: REAL
+    potassium_pump_current_i_p_K: REAL
+    calcium_dynamics_Ca_i: REAL
+    calcium_dynamics_Ca_o: REAL
+    sodium_dynamics_Na_i: REAL
+    sodium_dynamics_Na_o: REAL
+    potassium_dynamics_K_i: REAL
+    potassium_dynamics_K_o: REAL
+  definitions:
+    environment:
+      outputs:
+        time: REAL
+      locations:
+        q0:
+          flow:
+            time: 1000.0
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          time: 0.0
+    membrane:
+      inputs:
+        time: REAL
+        i_K1: REAL
+        i_to: REAL
+        i_Kr: REAL
+        i_Ks: REAL
+        i_CaL: REAL
+        i_NaK: REAL
+        i_Na: REAL
+        i_b_Na: REAL
+        i_NaCa: REAL
+        i_b_Ca: REAL
+        i_p_K: REAL
+        i_p_Ca: REAL
+      outputs:
+        V: REAL
+        R: REAL
+        T: REAL
+        F: REAL
+        Cm: REAL
+        V_c: REAL
+        i_Stim: REAL
+      parameters:
+        stim_start:
+          type: REAL
+          default: 10.0
+        stim_period:
+          type: REAL
+          default: 1000.0
+        stim_duration:
+          type: REAL
+          default: 1.0
+        stim_amplitude:
+          type: REAL
+          default: 52.0
+      locations:
+        q0:
+          flow:
+            V: (-1.0 / 1.0) * (i_K1 + i_to + i_Kr + i_Ks + i_CaL + i_NaK + i_Na +
+              i_b_Na + i_NaCa + i_b_Ca + i_p_K + i_p_Ca + i_Stim)
+          update:
+            i_Stim: i_Stim_pw(stim_amplitude, time, stim_period, stim_start, stim_duration)
+          transitions: []
+      functions:
+        i_Stim_pw:
+          inputs:
+            stim_amplitude: REAL
+            time: REAL
+            stim_period: REAL
+            stim_start: REAL
+            stim_duration: REAL
+          logic: |-
+            if(time - floor(time / stim_period) * stim_period >= stim_start && time - floor(time / stim_period) * stim_period <= stim_start + stim_duration) {
+              return -stim_amplitude
+            }
+            else {
+              return 0.0
+            }
+      initialisation:
+        state: q0
+        valuations:
+          V: -86.2
+          R: 8314.472
+          T: 310.0
+          F: 96485.3415
+          Cm: 0.185
+          V_c: 0.016404
+          i_Stim: 0.0
+    reversal_potentials:
+      inputs:
+        K_o: REAL
+        Na_o: REAL
+        K_i: REAL
+        Na_i: REAL
+        Ca_o: REAL
+        Ca_i: REAL
+        R: REAL
+        F: REAL
+        T: REAL
+        time: REAL
+      outputs:
+        E_Na: REAL
+        E_K: REAL
+        E_Ks: REAL
+        E_Ca: REAL
+      parameters:
+        P_kna:
+          type: REAL
+          default: 0.03
+      locations:
+        q0:
+          update:
+            E_Na: ((R * T) / F) * ln(Na_o / Na_i)
+            E_K: ((R * T) / F) * ln(K_o / K_i)
+            E_Ks: ((R * T) / F) * ln((K_o + P_kna * Na_o) / (K_i + P_kna * Na_i))
+            E_Ca: ((0.5 * R * T) / F) * ln(Ca_o / Ca_i)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          E_Na: 0.0
+          E_K: 0.0
+          E_Ks: 0.0
+          E_Ca: 0.0
+    inward_rectifier_potassium_current:
+      inputs:
+        V: REAL
+        K_o: REAL
+        E_K: REAL
+        time: REAL
+      outputs:
+        i_K1: REAL
+      parameters:
+        g_K1:
+          type: REAL
+          default: 5.405
+      locations:
+        q0:
+          update:
+            alpha_K1: 0.1 / (1.0 + exp(0.06 * ((V - E_K) - 200.0)))
+            beta_K1: (3.0 * exp(2.0E-4 * ((V - E_K) + 100.0)) + exp(0.1 * ((V - E_K)
+              - 10.0))) / (1.0 + exp(-0.5 * (V - E_K)))
+            xK1_inf: alpha_K1 / (alpha_K1 + beta_K1)
+            i_K1: g_K1 * xK1_inf * sqrt(K_o / 5.4) * (V - E_K) * 1.0000000000000002
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_K1: 0.0
+          xK1_inf: 0.0
+          alpha_K1: 0.0
+          beta_K1: 0.0
+    rapid_time_dependent_potassium_current:
+      inputs:
+        E_K: REAL
+        K_o: REAL
+        time: REAL
+        V: REAL
+        Xr1_private: REAL
+        Xr2_private: REAL
+      outputs:
+        i_Kr: REAL
+        time_private: REAL
+        V_private: REAL
+      parameters:
+        g_Kr:
+          type: REAL
+          default: 0.096
+      locations:
+        q0:
+          update:
+            i_Kr: g_Kr * sqrt(K_o / 5.4) * Xr1 * Xr2 * (V - E_K) * 1.0000000000000002
+            time_private: time
+            V_private: V
+            Xr1: Xr1_private
+            Xr2: Xr2_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_Kr: 0.0
+          Xr1: 0.0
+          Xr2: 0.0
+    rapid_time_dependent_potassium_current_Xr1_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        Xr1: REAL
+      locations:
+        q0:
+          flow:
+            Xr1: (xr1_inf - Xr1) / tau_xr1
+          update:
+            xr1_inf: 1.0 / (1.0 + exp((-26.0 - V) / 7.0))
+            alpha_xr1: 450.0 / (1.0 + exp((-45.0 - V) / 10.0))
+            beta_xr1: 6.0 / (1.0 + exp((V + 30.0) / 11.5))
+            tau_xr1: 1.0 * alpha_xr1 * beta_xr1
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          Xr1: 0.0
+          xr1_inf: 0.0
+          alpha_xr1: 0.0
+          beta_xr1: 0.0
+          tau_xr1: 0.0
+    rapid_time_dependent_potassium_current_Xr2_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        Xr2: REAL
+      locations:
+        q0:
+          flow:
+            Xr2: (xr2_inf - Xr2) / tau_xr2
+          update:
+            xr2_inf: 1.0 / (1.0 + exp((V + 88.0) / 24.0))
+            alpha_xr2: 3.0 / (1.0 + exp((-60.0 - V) / 20.0))
+            beta_xr2: 1.12 / (1.0 + exp((V - 60.0) / 20.0))
+            tau_xr2: 1.0 * alpha_xr2 * beta_xr2
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          Xr2: 1.0
+          xr2_inf: 0.0
+          alpha_xr2: 0.0
+          beta_xr2: 0.0
+          tau_xr2: 0.0
+    slow_time_dependent_potassium_current:
+      inputs:
+        E_Ks: REAL
+        time: REAL
+        V: REAL
+        Xs_private: REAL
+      outputs:
+        i_Ks: REAL
+        time_private: REAL
+        V_private: REAL
+      parameters:
+        g_Ks:
+          type: REAL
+          default: 0.062
+      locations:
+        q0:
+          update:
+            i_Ks: g_Ks * (pow(Xs, 2.0)) * (V - E_Ks) * 1.0000000000000002
+            time_private: time
+            V_private: V
+            Xs: Xs_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_Ks: 0.0
+          Xs: 0.0
+    slow_time_dependent_potassium_current_Xs_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        Xs: REAL
+      locations:
+        q0:
+          flow:
+            Xs: (xs_inf - Xs) / tau_xs
+          update:
+            xs_inf: 1.0 / (1.0 + exp((-5.0 - V) / 14.0))
+            alpha_xs: 1100.0 / sqrt(1.0 + exp((-10.0 - V) / 6.0))
+            beta_xs: 1.0 / (1.0 + exp((V - 60.0) / 20.0))
+            tau_xs: 1.0 * alpha_xs * beta_xs
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          Xs: 0.0
+          xs_inf: 0.0
+          alpha_xs: 0.0
+          beta_xs: 0.0
+          tau_xs: 0.0
+    fast_sodium_current:
+      inputs:
+        E_Na: REAL
+        time: REAL
+        V: REAL
+        m_private: REAL
+        h_private: REAL
+        j_private: REAL
+      outputs:
+        i_Na: REAL
+        time_private: REAL
+        V_private: REAL
+      parameters:
+        g_Na:
+          type: REAL
+          default: 14.838
+      locations:
+        q0:
+          update:
+            i_Na: g_Na * (pow(m, 3.0)) * h * j * (V - E_Na) * 1.0000000000000002
+            time_private: time
+            V_private: V
+            m: m_private
+            h: h_private
+            j: j_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_Na: 0.0
+          m: 0.0
+          h: 0.0
+          j: 0.0
+    fast_sodium_current_m_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        m: REAL
+      locations:
+        q0:
+          flow:
+            m: (m_inf - m) / tau_m
+          update:
+            m_inf: 1.0 / (pow(1.0 + exp((-56.86 - V) / 9.03), 2.0))
+            alpha_m: 1.0 / (1.0 + exp((-60.0 - V) / 5.0))
+            beta_m: 0.1 / (1.0 + exp((V + 35.0) / 5.0)) + 0.1 / (1.0 + exp((V - 50.0)
+              / 200.0))
+            tau_m: 1.0 * alpha_m * beta_m
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          m: 0.0
+          m_inf: 0.0
+          alpha_m: 0.0
+          beta_m: 0.0
+          tau_m: 0.0
+    fast_sodium_current_h_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        h: REAL
+      locations:
+        q0:
+          flow:
+            h: (h_inf - h) / tau_h
+          update:
+            h_inf: 1.0 / (pow(1.0 + exp((V + 71.55) / 7.43), 2.0))
+            alpha_h: alpha_h_pw(V)
+            beta_h: beta_h_pw(V)
+            tau_h: 1.0 / (alpha_h + beta_h)
+          transitions: []
+      functions:
+        alpha_h_pw:
+          inputs:
+            V: REAL
+          logic: |-
+            if(V < -40.0) {
+              return 0.057 * exp(-(V + 80.0) / 6.8)
+            }
+            else {
+              return 0.0
+            }
+        beta_h_pw:
+          inputs:
+            V: REAL
+          logic: |-
+            if(V < -40.0) {
+              return 2.7 * exp(0.079 * V) + 310000.0 * exp(0.3485 * V)
+            }
+            else {
+              return 0.77 / (0.13 * (1.0 + exp((V + 10.66) / -11.1)))
+            }
+      initialisation:
+        state: q0
+        valuations:
+          h: 0.75
+          h_inf: 0.0
+          alpha_h: 0.0
+          beta_h: 0.0
+          tau_h: 0.0
+    fast_sodium_current_j_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        j: REAL
+      locations:
+        q0:
+          flow:
+            j: (j_inf - j) / tau_j
+          update:
+            j_inf: 1.0 / (pow(1.0 + exp((V + 71.55) / 7.43), 2.0))
+            alpha_j: alpha_j_pw(V)
+            beta_j: beta_j_pw(V)
+            tau_j: 1.0 / (alpha_j + beta_j)
+          transitions: []
+      functions:
+        alpha_j_pw:
+          inputs:
+            V: REAL
+          logic: |-
+            if(V < -40.0) {
+              return (((-25428.0 * exp(0.2444 * V) - 6.948 * exp(-0.04391 * V)) * (V + 37.78)) / 1.0) / (1.0 + exp(0.311 * (V + 79.23)))
+            }
+            else {
+              return 0.0
+            }
+        beta_j_pw:
+          inputs:
+            V: REAL
+          logic: |-
+            if(V < -40.0) {
+              return (0.02424 * exp(-0.01052 * V)) / (1.0 + exp(-0.1378 * (V + 40.14)))
+            }
+            else {
+              return (0.6 * exp(0.057 * V)) / (1.0 + exp(-0.1 * (V + 32.0)))
+            }
+      initialisation:
+        state: q0
+        valuations:
+          j: 0.75
+          j_inf: 0.0
+          alpha_j: 0.0
+          beta_j: 0.0
+          tau_j: 0.0
+    sodium_background_current:
+      inputs:
+        E_Na: REAL
+        time: REAL
+        V: REAL
+      outputs:
+        i_b_Na: REAL
+      parameters:
+        g_bna:
+          type: REAL
+          default: 2.9E-4
+      locations:
+        q0:
+          update:
+            i_b_Na: g_bna * (V - E_Na) * 1.0000000000000002
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_b_Na: 0.0
+    L_type_Ca_current:
+      inputs:
+        Ca_o: REAL
+        Ca_i: REAL
+        R: REAL
+        F: REAL
+        T: REAL
+        time: REAL
+        V: REAL
+        d_private: REAL
+        f1_private: REAL
+        fCa_private: REAL
+      outputs:
+        i_CaL: REAL
+        Ca_i_private: REAL
+        time_private: REAL
+        V_private: REAL
+        d: REAL
+      parameters:
+        g_CaL:
+          type: REAL
+          default: 1.75E-4
+      locations:
+        q0:
+          update:
+            i_CaL: (((g_CaL * d * f1 * fCa * 4.0 * V * (pow(F, 2.0))) / (R * T)) *
+              (Ca_i * exp((2.0 * V * F) / (R * T)) - 0.341 * Ca_o)) / (exp((2.0 *
+              V * F) / (R * T)) - 1.0)
+            Ca_i_private: Ca_i
+            time_private: time
+            V_private: V
+            d: d_private
+            f1: f1_private
+            fCa: fCa_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_CaL: 0.0
+          d: 0.0
+          f1: 0.0
+          fCa: 0.0
+    L_type_Ca_current_d_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        d: REAL
+      locations:
+        q0:
+          flow:
+            d: (d_inf - d) / tau_d
+          update:
+            d_inf: 1.0 / (1.0 + exp((-5.0 - V) / 7.5))
+            alpha_d: 1.4 / (1.0 + exp((-35.0 - V) / 13.0)) + 0.25
+            beta_d: 1.4 / (1.0 + exp((V + 5.0) / 5.0))
+            gamma_d: 1.0 / (1.0 + exp((50.0 - V) / 20.0))
+            tau_d: 1.0 * alpha_d * beta_d + gamma_d
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          d: 0.0
+          d_inf: 0.0
+          alpha_d: 0.0
+          beta_d: 0.0
+          gamma_d: 0.0
+          tau_d: 0.0
+    L_type_Ca_current_f_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        f: REAL
+      locations:
+        q0:
+          flow:
+            f: (f_inf - f) / tau_f
+          update:
+            f_inf: 1.0 / (1.0 + exp((V + 20.0) / 7.0))
+            tau_f: 1125.0 * exp(-(pow(V + 27.0, 2.0)) / 240.0) + 80.0 + 165.0 / (1.0
+              + exp((25.0 - V) / 10.0))
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          f: 1.0
+          f_inf: 0.0
+          tau_f: 0.0
+    L_type_Ca_current_fCa_gate:
+      inputs:
+        Ca_i: REAL
+        V: REAL
+        time: REAL
+      outputs:
+        fCa: REAL
+      locations:
+        q0:
+          flow:
+            fCa: fCa_pw(fCa_inf, fCa, V, d_fCa)
+          update:
+            alpha_fCa: 1.0 / (1.0 + pow(Ca_i / 3.25E-4, 8.0))
+            beta_fCa: 0.1 / (1.0 + exp((Ca_i - 5.0E-4) / 1.0E-4))
+            gama_fCa: 0.2 / (1.0 + exp((Ca_i - 7.5E-4) / 8.0E-4))
+            fCa_inf: (alpha_fCa + beta_fCa + gama_fCa + 0.23) / 1.46
+            tau_fCa: 2.0
+            d_fCa: (fCa_inf - fCa) / tau_fCa
+          transitions: []
+      functions:
+        fCa_pw:
+          inputs:
+            fCa_inf: REAL
+            fCa: REAL
+            V: REAL
+            d_fCa: REAL
+          logic: |-
+            if(fCa_inf > fCa && V > -60.0) {
+              return 0.0
+            }
+            else {
+              return d_fCa
+            }
+      initialisation:
+        state: q0
+        valuations:
+          fCa: 1.0
+          alpha_fCa: 0.0
+          beta_fCa: 0.0
+          gama_fCa: 0.0
+          fCa_inf: 0.0
+          tau_fCa: 0.0
+          d_fCa: 0.0
+    calcium_background_current:
+      inputs:
+        E_Ca: REAL
+        time: REAL
+        V: REAL
+      outputs:
+        i_b_Ca: REAL
+      parameters:
+        g_bca:
+          type: REAL
+          default: 5.92E-4
+      locations:
+        q0:
+          update:
+            i_b_Ca: g_bca * (V - E_Ca) * 1.0000000000000002
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_b_Ca: 0.0
+    transient_outward_current:
+      inputs:
+        E_K: REAL
+        V: REAL
+        time: REAL
+        s_private: REAL
+        r_private: REAL
+      outputs:
+        i_to: REAL
+        V_private: REAL
+        time_private: REAL
+      parameters:
+        g_to:
+          type: REAL
+          default: 0.294
+      locations:
+        q0:
+          update:
+            i_to: g_to * r * s * (V - E_K) * 1.0000000000000002
+            V_private: V
+            time_private: time
+            s: s_private
+            r: r_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_to: 0.0
+          s: 0.0
+          r: 0.0
+    transient_outward_current_s_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        s: REAL
+      locations:
+        q0:
+          flow:
+            s: (s_inf - s) / tau_s
+          update:
+            s_inf: 1.0 / (1.0 + exp((V + 20.0) / 5.0))
+            tau_s: 85.0 * exp(-(pow(V + 45.0, 2.0)) / 320.0) + 5.0 / (1.0 + exp((V
+              - 20.0) / 5.0)) + 3.0
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          s: 1.0
+          s_inf: 0.0
+          tau_s: 0.0
+    transient_outward_current_r_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        r: REAL
+      locations:
+        q0:
+          flow:
+            r: (r_inf - r) / tau_r
+          update:
+            r_inf: 1.0 / (1.0 + exp((20.0 - V) / 6.0))
+            tau_r: 9.5 * exp(-(pow(V + 40.0, 2.0)) / 1800.0) + 0.8
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          r: 0.0
+          r_inf: 0.0
+          tau_r: 0.0
+    sodium_potassium_pump_current:
+      inputs:
+        K_o: REAL
+        Na_i: REAL
+        time: REAL
+        R: REAL
+        F: REAL
+        T: REAL
+        V: REAL
+      outputs:
+        i_NaK: REAL
+        V_private: REAL
+      parameters:
+        P_NaK:
+          type: REAL
+          default: 1.362
+        K_mk:
+          type: REAL
+          default: 1.0
+        K_mNa:
+          type: REAL
+          default: 40.0
+      locations:
+        q0:
+          update:
+            i_NaK: ((((P_NaK * K_o) / (K_o + K_mk)) * Na_i) / (Na_i + K_mNa)) / (1.0
+              + 0.1245 * exp((-0.1 * V * F) / (R * T)) + 0.0353 * exp((-V * F) / (R
+              * T)))
+            V_private: V
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_NaK: 0.0
+    sodium_calcium_exchanger_current:
+      inputs:
+        Na_i: REAL
+        Na_o: REAL
+        Ca_i: REAL
+        Ca_o: REAL
+        R: REAL
+        F: REAL
+        T: REAL
+        V: REAL
+        time: REAL
+      outputs:
+        i_NaCa: REAL
+      parameters:
+        K_NaCa:
+          type: REAL
+          default: 1000.0
+        K_sat:
+          type: REAL
+          default: 0.1
+        alpha:
+          type: REAL
+          default: 2.5
+        gamma:
+          type: REAL
+          default: 0.35
+        Km_Ca:
+          type: REAL
+          default: 1.38
+        Km_Nai:
+          type: REAL
+          default: 87.5
+      locations:
+        q0:
+          update:
+            i_NaCa: (K_NaCa * (exp((gamma * V * F) / (R * T)) * (pow(Na_i, 3.0)) *
+              Ca_o - exp(((gamma - 1.0) * V * F) / (R * T)) * (pow(Na_o, 3.0)) * Ca_i
+              * alpha)) / ((pow(Km_Nai, 3.0) + pow(Na_o, 3.0)) * (Km_Ca + Ca_o) *
+              (1.0 + K_sat * exp(((gamma - 1.0) * V * F) / (R * T))))
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_NaCa: 0.0
+    calcium_pump_current:
+      inputs:
+        Ca_i: REAL
+      outputs:
+        i_p_Ca: REAL
+      parameters:
+        g_pCa:
+          type: REAL
+          default: 0.825
+        K_pCa:
+          type: REAL
+          default: 5.0E-4
+      locations:
+        q0:
+          update:
+            i_p_Ca: (g_pCa * Ca_i) / (Ca_i + K_pCa)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_p_Ca: 0.0
+    potassium_pump_current:
+      inputs:
+        E_K: REAL
+        V: REAL
+      outputs:
+        i_p_K: REAL
+      parameters:
+        g_pK:
+          type: REAL
+          default: 0.0146
+      locations:
+        q0:
+          update:
+            i_p_K: ((g_pK * (V - E_K)) / (1.0 + exp((25.0 - V) / 5.98))) * 1.0000000000000002
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_p_K: 0.0
+    calcium_dynamics:
+      inputs:
+        V: REAL
+        V_c: REAL
+        time: REAL
+        d: REAL
+        F: REAL
+        Cm: REAL
+        i_CaL: REAL
+        i_NaCa: REAL
+        i_p_Ca: REAL
+        i_b_Ca: REAL
+      outputs:
+        Ca_i: REAL
+        Ca_o: REAL
+      parameters:
+        tau_g:
+          type: REAL
+          default: 2.0
+        a_rel:
+          type: REAL
+          default: 0.016464
+        b_rel:
+          type: REAL
+          default: 0.25
+        c_rel:
+          type: REAL
+          default: 0.008232
+        K_up:
+          type: REAL
+          default: 2.5E-4
+        V_leak:
+          type: REAL
+          default: 8.0E-5
+        Vmax_up:
+          type: REAL
+          default: 4.25E-4
+        Buf_c:
+          type: REAL
+          default: 0.15
+        K_buf_c:
+          type: REAL
+          default: 0.001
+        Buf_sr:
+          type: REAL
+          default: 10.0
+        K_buf_sr:
+          type: REAL
+          default: 0.3
+        V_sr:
+          type: REAL
+          default: 0.001094
+      locations:
+        q0:
+          flow:
+            g: g_pw(g_inf, g, V, d_g)
+            Ca_i: Ca_i_bufc * (((i_leak - i_up) + i_rel) - ((1.0 * ((i_CaL + i_b_Ca
+              + i_p_Ca) - 2.0 * i_NaCa)) / (2.0 * 1.0 * V_c * F)) * Cm)
+            Ca_SR: ((Ca_sr_bufsr * V_c) / V_sr) * (i_up - (i_rel + i_leak))
+          update:
+            i_rel: ((a_rel * (pow(Ca_SR, 2.0))) / (pow(b_rel, 2.0) + pow(Ca_SR, 2.0))
+              + c_rel) * d * g
+            i_up: Vmax_up / (1.0 + (pow(K_up, 2.0)) / (pow(Ca_i, 2.0)))
+            i_leak: V_leak * (Ca_SR - Ca_i)
+            g_inf: g_inf_pw(Ca_i)
+            d_g: (g_inf - g) / tau_g
+            Ca_i_bufc: 1.0 / (1.0 + (Buf_c * K_buf_c) / (pow(Ca_i + K_buf_c, 2.0)))
+            Ca_sr_bufsr: 1.0 / (1.0 + (Buf_sr * K_buf_sr) / (pow(Ca_SR + K_buf_sr,
+              2.0)))
+          transitions: []
+      functions:
+        g_inf_pw:
+          inputs:
+            Ca_i: REAL
+          logic: |-
+            if(Ca_i < 3.5E-4) {
+              return 1.0 / (1.0 + pow(Ca_i / 3.5E-4, 6.0))
+            }
+            else {
+              return 1.0 / (1.0 + pow(Ca_i / 3.5E-4, 16.0))
+            }
+        g_pw:
+          inputs:
+            g_inf: REAL
+            g: REAL
+            V: REAL
+            d_g: REAL
+          logic: |-
+            if(g_inf > g && V > -60.0) {
+              return 0.0
+            }
+            else {
+              return d_g
+            }
+      initialisation:
+        state: q0
+        valuations:
+          Ca_i: 2.0E-4
+          Ca_o: 2.0
+          Ca_SR: 0.2
+          i_rel: 0.0
+          i_up: 0.0
+          i_leak: 0.0
+          g: 1.0
+          g_inf: 0.0
+          Ca_i_bufc: 0.0
+          Ca_sr_bufsr: 0.0
+          d_g: 0.0
+    sodium_dynamics:
+      inputs:
+        time: REAL
+        F: REAL
+        Cm: REAL
+        V_c: REAL
+        i_Na: REAL
+        i_NaCa: REAL
+        i_NaK: REAL
+        i_b_Na: REAL
+      outputs:
+        Na_i: REAL
+        Na_o: REAL
+      locations:
+        q0:
+          flow:
+            Na_i: (-1.0 * (i_Na + i_b_Na + 3.0 * i_NaK + 3.0 * i_NaCa) * Cm) / (1.0
+              * V_c * F)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          Na_i: 11.6
+          Na_o: 140.0
+    potassium_dynamics:
+      inputs:
+        time: REAL
+        F: REAL
+        Cm: REAL
+        V_c: REAL
+        i_K1: REAL
+        i_to: REAL
+        i_NaK: REAL
+        i_Kr: REAL
+        i_Ks: REAL
+        i_p_K: REAL
+        i_Stim: REAL
+      outputs:
+        K_i: REAL
+        K_o: REAL
+      locations:
+        q0:
+          flow:
+            K_i: (-1.0 * ((i_K1 + i_to + i_Kr + i_Ks + i_p_K + i_Stim) - 2.0 * i_NaK)
+              * Cm) / (1.0 * V_c * F)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          K_i: 138.3
+          K_o: 5.4
+  instances:
+    environment: environment
+    membrane: membrane
+    reversal_potentials: reversal_potentials
+    inward_rectifier_potassium_current: inward_rectifier_potassium_current
+    rapid_time_dependent_potassium_current: rapid_time_dependent_potassium_current
+    rapid_time_dependent_potassium_current_Xr1_gate: rapid_time_dependent_potassium_current_Xr1_gate
+    rapid_time_dependent_potassium_current_Xr2_gate: rapid_time_dependent_potassium_current_Xr2_gate
+    slow_time_dependent_potassium_current: slow_time_dependent_potassium_current
+    slow_time_dependent_potassium_current_Xs_gate: slow_time_dependent_potassium_current_Xs_gate
+    fast_sodium_current: fast_sodium_current
+    fast_sodium_current_m_gate: fast_sodium_current_m_gate
+    fast_sodium_current_h_gate: fast_sodium_current_h_gate
+    fast_sodium_current_j_gate: fast_sodium_current_j_gate
+    sodium_background_current: sodium_background_current
+    L_type_Ca_current: L_type_Ca_current
+    L_type_Ca_current_d_gate: L_type_Ca_current_d_gate
+    L_type_Ca_current_f_gate: L_type_Ca_current_f_gate
+    L_type_Ca_current_fCa_gate: L_type_Ca_current_fCa_gate
+    calcium_background_current: calcium_background_current
+    transient_outward_current: transient_outward_current
+    transient_outward_current_s_gate: transient_outward_current_s_gate
+    transient_outward_current_r_gate: transient_outward_current_r_gate
+    sodium_potassium_pump_current: sodium_potassium_pump_current
+    sodium_calcium_exchanger_current: sodium_calcium_exchanger_current
+    calcium_pump_current: calcium_pump_current
+    potassium_pump_current: potassium_pump_current
+    calcium_dynamics: calcium_dynamics
+    sodium_dynamics: sodium_dynamics
+    potassium_dynamics: potassium_dynamics
+  mappings:
+    L_type_Ca_current_Ca_i_private: L_type_Ca_current.Ca_i_private
+    L_type_Ca_current_V_private: L_type_Ca_current.V_private
+    L_type_Ca_current_d: L_type_Ca_current.d
+    L_type_Ca_current_d_gate_d: L_type_Ca_current_d_gate.d
+    L_type_Ca_current_fCa_gate_fCa: L_type_Ca_current_fCa_gate.fCa
+    L_type_Ca_current_f_gate_f: L_type_Ca_current_f_gate.f
+    L_type_Ca_current_i_CaL: L_type_Ca_current.i_CaL
+    L_type_Ca_current_time_private: L_type_Ca_current.time_private
+    calcium_background_current_i_b_Ca: calcium_background_current.i_b_Ca
+    calcium_dynamics_Ca_i: calcium_dynamics.Ca_i
+    calcium_dynamics_Ca_o: calcium_dynamics.Ca_o
+    calcium_pump_current_i_p_Ca: calcium_pump_current.i_p_Ca
+    environment_time: environment.time
+    fast_sodium_current_V_private: fast_sodium_current.V_private
+    fast_sodium_current_h_gate_h: fast_sodium_current_h_gate.h
+    fast_sodium_current_i_Na: fast_sodium_current.i_Na
+    fast_sodium_current_j_gate_j: fast_sodium_current_j_gate.j
+    fast_sodium_current_m_gate_m: fast_sodium_current_m_gate.m
+    fast_sodium_current_time_private: fast_sodium_current.time_private
+    inward_rectifier_potassium_current_i_K1: inward_rectifier_potassium_current.i_K1
+    membrane_Cm: membrane.Cm
+    membrane_F: membrane.F
+    membrane_R: membrane.R
+    membrane_T: membrane.T
+    membrane_V: membrane.V
+    membrane_V_c: membrane.V_c
+    membrane_i_Stim: membrane.i_Stim
+    potassium_dynamics_K_i: potassium_dynamics.K_i
+    potassium_dynamics_K_o: potassium_dynamics.K_o
+    potassium_pump_current_i_p_K: potassium_pump_current.i_p_K
+    rapid_time_dependent_potassium_current_V_private: rapid_time_dependent_potassium_current.V_private
+    rapid_time_dependent_potassium_current_Xr1_gate_Xr1: rapid_time_dependent_potassium_current_Xr1_gate.Xr1
+    rapid_time_dependent_potassium_current_Xr2_gate_Xr2: rapid_time_dependent_potassium_current_Xr2_gate.Xr2
+    rapid_time_dependent_potassium_current_i_Kr: rapid_time_dependent_potassium_current.i_Kr
+    rapid_time_dependent_potassium_current_time_private: rapid_time_dependent_potassium_current.time_private
+    reversal_potentials_E_Ca: reversal_potentials.E_Ca
+    reversal_potentials_E_K: reversal_potentials.E_K
+    reversal_potentials_E_Ks: reversal_potentials.E_Ks
+    reversal_potentials_E_Na: reversal_potentials.E_Na
+    slow_time_dependent_potassium_current_V_private: slow_time_dependent_potassium_current.V_private
+    slow_time_dependent_potassium_current_Xs_gate_Xs: slow_time_dependent_potassium_current_Xs_gate.Xs
+    slow_time_dependent_potassium_current_i_Ks: slow_time_dependent_potassium_current.i_Ks
+    slow_time_dependent_potassium_current_time_private: slow_time_dependent_potassium_current.time_private
+    sodium_background_current_i_b_Na: sodium_background_current.i_b_Na
+    sodium_calcium_exchanger_current_i_NaCa: sodium_calcium_exchanger_current.i_NaCa
+    sodium_dynamics_Na_i: sodium_dynamics.Na_i
+    sodium_dynamics_Na_o: sodium_dynamics.Na_o
+    sodium_potassium_pump_current_V_private: sodium_potassium_pump_current.V_private
+    sodium_potassium_pump_current_i_NaK: sodium_potassium_pump_current.i_NaK
+    transient_outward_current_V_private: transient_outward_current.V_private
+    transient_outward_current_i_to: transient_outward_current.i_to
+    transient_outward_current_r_gate_r: transient_outward_current_r_gate.r
+    transient_outward_current_s_gate_s: transient_outward_current_s_gate.s
+    transient_outward_current_time_private: transient_outward_current.time_private
+    L_type_Ca_current.Ca_i: calcium_dynamics.Ca_i
+    L_type_Ca_current.Ca_o: calcium_dynamics.Ca_o
+    L_type_Ca_current.F: membrane.F
+    L_type_Ca_current.R: membrane.R
+    L_type_Ca_current.T: membrane.T
+    L_type_Ca_current.V: membrane.V
+    L_type_Ca_current.d_private: L_type_Ca_current_d_gate.d
+    L_type_Ca_current.f1_private: L_type_Ca_current_f_gate.f
+    L_type_Ca_current.fCa_private: L_type_Ca_current_fCa_gate.fCa
+    L_type_Ca_current.time: environment.time
+    L_type_Ca_current_d_gate.V: L_type_Ca_current.V_private
+    L_type_Ca_current_d_gate.time: L_type_Ca_current.time_private
+    L_type_Ca_current_fCa_gate.Ca_i: L_type_Ca_current.Ca_i_private
+    L_type_Ca_current_fCa_gate.V: L_type_Ca_current.V_private
+    L_type_Ca_current_fCa_gate.time: L_type_Ca_current.time_private
+    L_type_Ca_current_f_gate.V: L_type_Ca_current.V_private
+    L_type_Ca_current_f_gate.time: L_type_Ca_current.time_private
+    calcium_background_current.E_Ca: reversal_potentials.E_Ca
+    calcium_background_current.V: membrane.V
+    calcium_background_current.time: environment.time
+    calcium_dynamics.Cm: membrane.Cm
+    calcium_dynamics.F: membrane.F
+    calcium_dynamics.V: membrane.V
+    calcium_dynamics.V_c: membrane.V_c
+    calcium_dynamics.d: L_type_Ca_current.d
+    calcium_dynamics.i_CaL: L_type_Ca_current.i_CaL
+    calcium_dynamics.i_NaCa: sodium_calcium_exchanger_current.i_NaCa
+    calcium_dynamics.i_b_Ca: calcium_background_current.i_b_Ca
+    calcium_dynamics.i_p_Ca: calcium_pump_current.i_p_Ca
+    calcium_dynamics.time: environment.time
+    calcium_pump_current.Ca_i: calcium_dynamics.Ca_i
+    fast_sodium_current.E_Na: reversal_potentials.E_Na
+    fast_sodium_current.V: membrane.V
+    fast_sodium_current.h_private: fast_sodium_current_h_gate.h
+    fast_sodium_current.j_private: fast_sodium_current_j_gate.j
+    fast_sodium_current.m_private: fast_sodium_current_m_gate.m
+    fast_sodium_current.time: environment.time
+    fast_sodium_current_h_gate.V: fast_sodium_current.V_private
+    fast_sodium_current_h_gate.time: fast_sodium_current.time_private
+    fast_sodium_current_j_gate.V: fast_sodium_current.V_private
+    fast_sodium_current_j_gate.time: fast_sodium_current.time_private
+    fast_sodium_current_m_gate.V: fast_sodium_current.V_private
+    fast_sodium_current_m_gate.time: fast_sodium_current.time_private
+    inward_rectifier_potassium_current.E_K: reversal_potentials.E_K
+    inward_rectifier_potassium_current.K_o: potassium_dynamics.K_o
+    inward_rectifier_potassium_current.V: membrane.V
+    inward_rectifier_potassium_current.time: environment.time
+    membrane.i_CaL: L_type_Ca_current.i_CaL
+    membrane.i_K1: inward_rectifier_potassium_current.i_K1
+    membrane.i_Kr: rapid_time_dependent_potassium_current.i_Kr
+    membrane.i_Ks: slow_time_dependent_potassium_current.i_Ks
+    membrane.i_Na: fast_sodium_current.i_Na
+    membrane.i_NaCa: sodium_calcium_exchanger_current.i_NaCa
+    membrane.i_NaK: sodium_potassium_pump_current.i_NaK
+    membrane.i_b_Ca: calcium_background_current.i_b_Ca
+    membrane.i_b_Na: sodium_background_current.i_b_Na
+    membrane.i_p_Ca: calcium_pump_current.i_p_Ca
+    membrane.i_p_K: potassium_pump_current.i_p_K
+    membrane.i_to: transient_outward_current.i_to
+    membrane.time: environment.time
+    potassium_dynamics.Cm: membrane.Cm
+    potassium_dynamics.F: membrane.F
+    potassium_dynamics.V_c: membrane.V_c
+    potassium_dynamics.i_K1: inward_rectifier_potassium_current.i_K1
+    potassium_dynamics.i_Kr: rapid_time_dependent_potassium_current.i_Kr
+    potassium_dynamics.i_Ks: slow_time_dependent_potassium_current.i_Ks
+    potassium_dynamics.i_NaK: sodium_potassium_pump_current.i_NaK
+    potassium_dynamics.i_Stim: membrane.i_Stim
+    potassium_dynamics.i_p_K: potassium_pump_current.i_p_K
+    potassium_dynamics.i_to: transient_outward_current.i_to
+    potassium_dynamics.time: environment.time
+    potassium_pump_current.E_K: reversal_potentials.E_K
+    potassium_pump_current.V: membrane.V
+    rapid_time_dependent_potassium_current.E_K: reversal_potentials.E_K
+    rapid_time_dependent_potassium_current.K_o: potassium_dynamics.K_o
+    rapid_time_dependent_potassium_current.V: membrane.V
+    rapid_time_dependent_potassium_current.Xr1_private: rapid_time_dependent_potassium_current_Xr1_gate.Xr1
+    rapid_time_dependent_potassium_current.Xr2_private: rapid_time_dependent_potassium_current_Xr2_gate.Xr2
+    rapid_time_dependent_potassium_current.time: environment.time
+    rapid_time_dependent_potassium_current_Xr1_gate.V: rapid_time_dependent_potassium_current.V_private
+    rapid_time_dependent_potassium_current_Xr1_gate.time: rapid_time_dependent_potassium_current.time_private
+    rapid_time_dependent_potassium_current_Xr2_gate.V: rapid_time_dependent_potassium_current.V_private
+    rapid_time_dependent_potassium_current_Xr2_gate.time: rapid_time_dependent_potassium_current.time_private
+    reversal_potentials.Ca_i: calcium_dynamics.Ca_i
+    reversal_potentials.Ca_o: calcium_dynamics.Ca_o
+    reversal_potentials.F: membrane.F
+    reversal_potentials.K_i: potassium_dynamics.K_i
+    reversal_potentials.K_o: potassium_dynamics.K_o
+    reversal_potentials.Na_i: sodium_dynamics.Na_i
+    reversal_potentials.Na_o: sodium_dynamics.Na_o
+    reversal_potentials.R: membrane.R
+    reversal_potentials.T: membrane.T
+    reversal_potentials.time: environment.time
+    slow_time_dependent_potassium_current.E_Ks: reversal_potentials.E_Ks
+    slow_time_dependent_potassium_current.V: membrane.V
+    slow_time_dependent_potassium_current.Xs_private: slow_time_dependent_potassium_current_Xs_gate.Xs
+    slow_time_dependent_potassium_current.time: environment.time
+    slow_time_dependent_potassium_current_Xs_gate.V: slow_time_dependent_potassium_current.V_private
+    slow_time_dependent_potassium_current_Xs_gate.time: slow_time_dependent_potassium_current.time_private
+    sodium_background_current.E_Na: reversal_potentials.E_Na
+    sodium_background_current.V: membrane.V
+    sodium_background_current.time: environment.time
+    sodium_calcium_exchanger_current.Ca_i: calcium_dynamics.Ca_i
+    sodium_calcium_exchanger_current.Ca_o: calcium_dynamics.Ca_o
+    sodium_calcium_exchanger_current.F: membrane.F
+    sodium_calcium_exchanger_current.Na_i: sodium_dynamics.Na_i
+    sodium_calcium_exchanger_current.Na_o: sodium_dynamics.Na_o
+    sodium_calcium_exchanger_current.R: membrane.R
+    sodium_calcium_exchanger_current.T: membrane.T
+    sodium_calcium_exchanger_current.V: membrane.V
+    sodium_calcium_exchanger_current.time: environment.time
+    sodium_dynamics.Cm: membrane.Cm
+    sodium_dynamics.F: membrane.F
+    sodium_dynamics.V_c: membrane.V_c
+    sodium_dynamics.i_Na: fast_sodium_current.i_Na
+    sodium_dynamics.i_NaCa: sodium_calcium_exchanger_current.i_NaCa
+    sodium_dynamics.i_NaK: sodium_potassium_pump_current.i_NaK
+    sodium_dynamics.i_b_Na: sodium_background_current.i_b_Na
+    sodium_dynamics.time: environment.time
+    sodium_potassium_pump_current.F: membrane.F
+    sodium_potassium_pump_current.K_o: potassium_dynamics.K_o
+    sodium_potassium_pump_current.Na_i: sodium_dynamics.Na_i
+    sodium_potassium_pump_current.R: membrane.R
+    sodium_potassium_pump_current.T: membrane.T
+    sodium_potassium_pump_current.V: membrane.V
+    sodium_potassium_pump_current.time: environment.time
+    transient_outward_current.E_K: reversal_potentials.E_K
+    transient_outward_current.V: membrane.V
+    transient_outward_current.r_private: transient_outward_current_r_gate.r
+    transient_outward_current.s_private: transient_outward_current_s_gate.s
+    transient_outward_current.time: environment.time
+    transient_outward_current_r_gate.V: transient_outward_current.V_private
+    transient_outward_current_r_gate.time: transient_outward_current.time_private
+    transient_outward_current_s_gate.V: transient_outward_current.V_private
+    transient_outward_current_s_gate.time: transient_outward_current.time_private
+codegenConfig:
+  indentSize: 4
+  execution:
+    stepSize: 0.001
+    simulationTime: 10.0
+  logging:
+    enable: true
+    file: out.csv
+  parametrisationMethod: COMPILE_TIME
+  maximumInterTransitions: 1
+  requireOneIntraTransitionPerTick: false
+  ccodeSettings:
+    hasLoopAnnotations: false
+  runTimeParametrisation: false
+  compileTimeParametrisation: true

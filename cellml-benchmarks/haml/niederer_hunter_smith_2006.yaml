@@ -1,0 +1,428 @@
+---
+name: niederer_2006
+system:
+  outputs:
+    environment_time: REAL
+    intracellular_ion_concentrations_Ca_i: REAL
+    intracellular_ion_concentrations_Ca_b: REAL
+    intracellular_ion_concentrations_TRPN: REAL
+    tropomyosin_z: REAL
+    tropomyosin_z_max: REAL
+    troponin_J_TRPN: REAL
+    troponin_Ca_TRPN_Max: REAL
+    troponin_k_on: REAL
+    troponin_k_Ref_off: REAL
+    troponin_gamma_trpn: REAL
+    Myofilaments_lambda: REAL
+    Myofilaments_ExtensionRatio: REAL
+    Myofilaments_dExtensionRatiodt: REAL
+    Myofilaments_lambda_prev: REAL
+    filament_overlap_overlap: REAL
+    filament_overlap_beta_0: REAL
+    length_independent_tension_T_ref: REAL
+    length_independent_tension_T_Base: REAL
+    isometric_tension_T_0: REAL
+    Cross_Bridges_Tension: REAL
+  definitions:
+    environment:
+      outputs:
+        time: REAL
+      locations:
+        q0:
+          flow:
+            time: 1000.0
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          time: 0.0
+    intracellular_ion_concentrations:
+      inputs:
+        time: REAL
+        Ca_TRPN_Max: REAL
+        J_TRPN: REAL
+      outputs:
+        Ca_i: REAL
+        Ca_b: REAL
+        TRPN: REAL
+      locations:
+        q0:
+          flow:
+            TRPN: J_TRPN
+          update:
+            Ca_b: Ca_TRPN_Max - TRPN
+            Ca_i: Ca_i_pw(time)
+          transitions: []
+      functions:
+        Ca_i_pw:
+          inputs:
+            time: REAL
+          logic: |-
+            if(time < 1.0) {
+              return 1000.0 * 1.8433
+            }
+            else if(time >= 10.0 && time < 15.0) {
+              return 1000.0 * (((1.055 * (pow(time / 1000.0, 3.0)) - 0.03507 * (pow(time / 1000.0, 2.0))) + (3.992E-4 * time) / 1000.0) - 1.356)
+            }
+            else if(time >= 15.0 && time < 55.0) {
+              return 1000.0 * (((0.014 * (pow(time / 1000.0, 3.0)) - 0.002555 * (pow(time / 1000.0, 2.0))) + (1.494E-4 * time) / 1000.0) - 1.428)
+            }
+            else if(time >= 55.0 && time < 250.0) {
+              return 1000.0 * (((1.739 * (pow(time / 1000.0, 3.0)) - 3.209 * (pow(time / 1000.0, 2.0))) - (5.689 * time) / 1000.0) + 1.719)
+            }
+            else if(time >= 250.0 && time < 490.0) {
+              return 1000.0 * ((((1.321E-4 * (pow(time / 1000.0, 4.0)) - 2.197E-4 * (pow(time / 1000.0, 3.0))) + 1.374E-4 * (pow(time / 1000.0, 2.0))) - (3.895 * time) / 1000.0) + 4.441)
+            }
+            else {
+              return 1000.0 * 1.2148
+            }
+      initialisation:
+        state: q0
+        valuations:
+          Ca_i: 0.0
+          Ca_b: 0.0
+          TRPN: 0.067593139865
+    thinfilaments:
+      locations:
+        q0:
+          transitions: []
+      initialisation:
+        state: q0
+    tropomyosin:
+      inputs:
+        time: REAL
+        k_on: REAL
+        k_Ref_off: REAL
+        gamma_trpn: REAL
+        Ca_TRPN_Max: REAL
+        beta_0: REAL
+        Ca_b: REAL
+        lambda: REAL
+      outputs:
+        z: REAL
+        z_max: REAL
+      parameters:
+        alpha_0:
+          type: REAL
+          default: 0.008
+        alpha_r1:
+          type: REAL
+          default: 0.002
+        alpha_r2:
+          type: REAL
+          default: 0.00175
+        n_Rel:
+          type: REAL
+          default: 3.0
+        K_z:
+          type: REAL
+          default: 0.15
+        n_Hill:
+          type: REAL
+          default: 3.0
+        Ca_50ref:
+          type: REAL
+          default: 0.00105
+        z_p:
+          type: REAL
+          default: 0.85
+        beta_1:
+          type: REAL
+          default: -4.0
+      locations:
+        q0:
+          flow:
+            z: alpha_Tm * (1.0 - z) - beta_Tm * z
+          update:
+            K_2: ((alpha_r2 * (pow(z_p, n_Rel))) / (pow(z_p, n_Rel) + pow(K_z, n_Rel)))
+              * (1.0 - (n_Rel * (pow(K_z, n_Rel))) / (pow(z_p, n_Rel) + pow(K_z, n_Rel)))
+            K_1: (alpha_r2 * (pow(z_p, n_Rel - 1.0)) * n_Rel * (pow(K_z, n_Rel)))
+              / (pow(pow(z_p, n_Rel) + pow(K_z, n_Rel), 2.0))
+            z_max: (alpha_0 / (pow(Ca_TRPN_50 / Ca_TRPN_Max, n_Hill)) - K_2) / (alpha_r1
+              + K_1 + alpha_0 / (pow(Ca_TRPN_50 / Ca_TRPN_Max, n_Hill)))
+            Ca_50: Ca_50ref * (1.0 + beta_1 * (lambda - 1.0))
+            Ca_TRPN_50: (Ca_50 * Ca_TRPN_Max) / (Ca_50 + (k_Ref_off / k_on) * (1.0
+              - ((1.0 + beta_0 * (lambda - 1.0)) * 0.5) / gamma_trpn))
+            alpha_Tm: alpha_0 * (pow(Ca_b / Ca_TRPN_50, n_Hill))
+            beta_Tm: alpha_r1 + (alpha_r2 * (pow(z, n_Rel - 1.0))) / (pow(z, n_Rel)
+              + pow(K_z, n_Rel))
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          z: 0.014417937837
+          z_max: 0.0
+          Ca_50: 0.0
+          Ca_TRPN_50: 0.0
+          K_2: 0.0
+          K_1: 0.0
+          alpha_Tm: 0.0
+          beta_Tm: 0.0
+    troponin:
+      inputs:
+        TRPN: REAL
+        Ca_i: REAL
+        Tension: REAL
+        T_ref: REAL
+      outputs:
+        J_TRPN: REAL
+        Ca_TRPN_Max: REAL
+        k_on: REAL
+        k_Ref_off: REAL
+        gamma_trpn: REAL
+      locations:
+        q0:
+          update:
+            k_off: k_off_pw(k_Ref_off, Tension, gamma_trpn, T_ref)
+            J_TRPN: (Ca_TRPN_Max - TRPN) * k_off - Ca_i * TRPN * k_on
+          transitions: []
+      functions:
+        k_off_pw:
+          inputs:
+            k_Ref_off: REAL
+            Tension: REAL
+            gamma_trpn: REAL
+            T_ref: REAL
+          logic: |-
+            if(1.0 - Tension / (gamma_trpn * T_ref) > 0.1) {
+              return k_Ref_off * (1.0 - Tension / (gamma_trpn * T_ref))
+            }
+            else {
+              return k_Ref_off * 0.1
+            }
+      initialisation:
+        state: q0
+        valuations:
+          J_TRPN: 0.0
+          Ca_TRPN_Max: 0.07
+          k_off: 0.0
+          k_on: 100.0
+          k_Ref_off: 0.2
+          gamma_trpn: 2.0
+    Myofilaments:
+      inputs:
+        time: REAL
+      outputs:
+        lambda: REAL
+        ExtensionRatio: REAL
+        dExtensionRatiodt: REAL
+        lambda_prev: REAL
+      locations:
+        q0:
+          update:
+            ExtensionRatio: ExtensionRatio_pw(time)
+            lambda_prev: ExtensionRatio
+            dExtensionRatiodt: 0.0
+            lambda: lambda_pw(ExtensionRatio)
+          transitions: []
+      functions:
+        ExtensionRatio_pw:
+          inputs:
+            time: REAL
+          logic: |-
+            if(time > 1000.0) {
+              return 1.0
+            }
+            else {
+              return 1.0
+            }
+        lambda_pw:
+          inputs:
+            ExtensionRatio: REAL
+          logic: |-
+            if(ExtensionRatio > 0.8 && ExtensionRatio <= 1.15) {
+              return ExtensionRatio
+            }
+            else if(ExtensionRatio > 1.15) {
+              return 1.15
+            }
+            else {
+              return 0.8
+            }
+      initialisation:
+        state: q0
+        valuations:
+          lambda: 0.0
+          ExtensionRatio: 0.0
+          dExtensionRatiodt: 0.0
+          lambda_prev: 0.0
+    filament_overlap:
+      inputs:
+        lambda: REAL
+      outputs:
+        overlap: REAL
+        beta_0: REAL
+      locations:
+        q0:
+          update:
+            overlap: 1.0 + beta_0 * (lambda - 1.0)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          overlap: 0.0
+          beta_0: 4.9
+    length_independent_tension:
+      inputs:
+        z: REAL
+        z_max: REAL
+      outputs:
+        T_ref: REAL
+        T_Base: REAL
+      locations:
+        q0:
+          update:
+            T_Base: (T_ref * z) / z_max
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          T_ref: 56.2
+          T_Base: 0.0
+    isometric_tension:
+      inputs:
+        T_Base: REAL
+        overlap: REAL
+      outputs:
+        T_0: REAL
+      locations:
+        q0:
+          update:
+            T_0: T_Base * overlap
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          T_0: 0.0
+    Cross_Bridges:
+      inputs:
+        time: REAL
+        dExtensionRatiodt: REAL
+        T_0: REAL
+      outputs:
+        Tension: REAL
+      parameters:
+        a:
+          type: REAL
+          default: 0.35
+        A_1:
+          type: REAL
+          default: -29.0
+        A_2:
+          type: REAL
+          default: 138.0
+        A_3:
+          type: REAL
+          default: 129.0
+        alpha_1:
+          type: REAL
+          default: 0.03
+        alpha_2:
+          type: REAL
+          default: 0.13
+        alpha_3:
+          type: REAL
+          default: 0.625
+      locations:
+        q0:
+          flow:
+            Q_1: A_1 * dExtensionRatiodt - alpha_1 * Q_1
+            Q_2: A_2 * dExtensionRatiodt - alpha_2 * Q_2
+            Q_3: A_3 * dExtensionRatiodt - alpha_3 * Q_3
+          update:
+            Q: Q_1 + Q_2 + Q_3
+            Tension: Tension_pw(T_0, a, Q)
+          transitions: []
+      functions:
+        Tension_pw:
+          inputs:
+            T_0: REAL
+            a: REAL
+            Q: REAL
+          logic: |-
+            if(Q < 0.0) {
+              return (T_0 * (a * Q + 1.0)) / (1.0 - Q)
+            }
+            else {
+              return (T_0 * (1.0 + (a + 2.0) * Q)) / (1.0 + Q)
+            }
+      initialisation:
+        state: q0
+        valuations:
+          Q: 0.0
+          Q_1: 0.0
+          Q_2: 0.0
+          Q_3: 0.0
+          Tension: 0.0
+  instances:
+    environment: environment
+    intracellular_ion_concentrations: intracellular_ion_concentrations
+    thinfilaments: thinfilaments
+    tropomyosin: tropomyosin
+    troponin: troponin
+    Myofilaments: Myofilaments
+    filament_overlap: filament_overlap
+    length_independent_tension: length_independent_tension
+    isometric_tension: isometric_tension
+    Cross_Bridges: Cross_Bridges
+  mappings:
+    Cross_Bridges_Tension: Cross_Bridges.Tension
+    Myofilaments_ExtensionRatio: Myofilaments.ExtensionRatio
+    Myofilaments_dExtensionRatiodt: Myofilaments.dExtensionRatiodt
+    Myofilaments_lambda: Myofilaments.lambda
+    Myofilaments_lambda_prev: Myofilaments.lambda_prev
+    environment_time: environment.time
+    filament_overlap_beta_0: filament_overlap.beta_0
+    filament_overlap_overlap: filament_overlap.overlap
+    intracellular_ion_concentrations_Ca_b: intracellular_ion_concentrations.Ca_b
+    intracellular_ion_concentrations_Ca_i: intracellular_ion_concentrations.Ca_i
+    intracellular_ion_concentrations_TRPN: intracellular_ion_concentrations.TRPN
+    isometric_tension_T_0: isometric_tension.T_0
+    length_independent_tension_T_Base: length_independent_tension.T_Base
+    length_independent_tension_T_ref: length_independent_tension.T_ref
+    tropomyosin_z: tropomyosin.z
+    tropomyosin_z_max: tropomyosin.z_max
+    troponin_Ca_TRPN_Max: troponin.Ca_TRPN_Max
+    troponin_J_TRPN: troponin.J_TRPN
+    troponin_gamma_trpn: troponin.gamma_trpn
+    troponin_k_Ref_off: troponin.k_Ref_off
+    troponin_k_on: troponin.k_on
+    Cross_Bridges.T_0: isometric_tension.T_0
+    Cross_Bridges.dExtensionRatiodt: Myofilaments.dExtensionRatiodt
+    Cross_Bridges.time: environment.time
+    Myofilaments.time: environment.time
+    filament_overlap.lambda: Myofilaments.lambda
+    intracellular_ion_concentrations.Ca_TRPN_Max: troponin.Ca_TRPN_Max
+    intracellular_ion_concentrations.J_TRPN: troponin.J_TRPN
+    intracellular_ion_concentrations.time: environment.time
+    isometric_tension.T_Base: length_independent_tension.T_Base
+    isometric_tension.overlap: filament_overlap.overlap
+    length_independent_tension.z: tropomyosin.z
+    length_independent_tension.z_max: tropomyosin.z_max
+    tropomyosin.Ca_TRPN_Max: troponin.Ca_TRPN_Max
+    tropomyosin.Ca_b: intracellular_ion_concentrations.Ca_b
+    tropomyosin.beta_0: filament_overlap.beta_0
+    tropomyosin.gamma_trpn: troponin.gamma_trpn
+    tropomyosin.k_Ref_off: troponin.k_Ref_off
+    tropomyosin.k_on: troponin.k_on
+    tropomyosin.lambda: Myofilaments.lambda
+    tropomyosin.time: environment.time
+    troponin.Ca_i: intracellular_ion_concentrations.Ca_i
+    troponin.TRPN: intracellular_ion_concentrations.TRPN
+    troponin.T_ref: length_independent_tension.T_ref
+    troponin.Tension: Cross_Bridges.Tension
+codegenConfig:
+  indentSize: 4
+  execution:
+    stepSize: 0.001
+    simulationTime: 10.0
+  logging:
+    enable: true
+    file: out.csv
+  parametrisationMethod: COMPILE_TIME
+  maximumInterTransitions: 1
+  requireOneIntraTransitionPerTick: false
+  ccodeSettings:
+    hasLoopAnnotations: false
+  runTimeParametrisation: false
+  compileTimeParametrisation: true

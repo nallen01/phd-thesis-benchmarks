@@ -1,0 +1,270 @@
+---
+name: hodgkin_huxley_squid_axon_1952
+system:
+  outputs:
+    environment_time: REAL
+    membrane_V: REAL
+    membrane_E_R: REAL
+    sodium_channel_i_Na: REAL
+    sodium_channel_time_private: REAL
+    sodium_channel_V_private: REAL
+    sodium_channel_m_gate_m: REAL
+    sodium_channel_h_gate_h: REAL
+    potassium_channel_i_K: REAL
+    potassium_channel_time_private: REAL
+    potassium_channel_V_private: REAL
+    potassium_channel_n_gate_n: REAL
+    leakage_current_i_L: REAL
+  definitions:
+    environment:
+      outputs:
+        time: REAL
+      locations:
+        q0:
+          flow:
+            time: 1000.0
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          time: 0.0
+    membrane:
+      inputs:
+        time: REAL
+        i_Na: REAL
+        i_K: REAL
+        i_L: REAL
+      outputs:
+        V: REAL
+        E_R: REAL
+      parameters:
+        Cm:
+          type: REAL
+          default: 1.0
+      locations:
+        q0:
+          flow:
+            V: -(-i_Stim + i_Na + i_K + i_L) / Cm
+          update:
+            i_Stim: i_Stim_pw(time)
+          transitions: []
+      functions:
+        i_Stim_pw:
+          inputs:
+            time: REAL
+          logic: |-
+            if(time >= 10.0 && time <= 10.5) {
+              return 20.0
+            }
+            else {
+              return 0.0
+            }
+      initialisation:
+        state: q0
+        valuations:
+          V: -75.0
+          E_R: -75.0
+          i_Stim: 0.0
+    sodium_channel:
+      inputs:
+        time: REAL
+        V: REAL
+        E_R: REAL
+        m_private: REAL
+        h_private: REAL
+      outputs:
+        i_Na: REAL
+        time_private: REAL
+        V_private: REAL
+      parameters:
+        g_Na:
+          type: REAL
+          default: 120.0
+      locations:
+        q0:
+          update:
+            E_Na: E_R + 115.0
+            i_Na: g_Na * (pow(m, 3.0)) * h * (V - E_Na)
+            time_private: time
+            V_private: V
+            m: m_private
+            h: h_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_Na: 0.0
+          E_Na: 0.0
+          m: 0.0
+          h: 0.0
+    sodium_channel_m_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        m: REAL
+      locations:
+        q0:
+          flow:
+            m: alpha_m * (1.0 - m) - beta_m * m
+          update:
+            alpha_m: (-0.1 * (V + 50.0)) / (exp(-(V + 50.0) / 10.0) - 1.0)
+            beta_m: 4.0 * exp(-(V + 75.0) / 18.0)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          m: 0.05
+          alpha_m: 0.0
+          beta_m: 0.0
+    sodium_channel_h_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        h: REAL
+      locations:
+        q0:
+          flow:
+            h: alpha_h * (1.0 - h) - beta_h * h
+          update:
+            alpha_h: 0.07 * exp(-(V + 75.0) / 20.0)
+            beta_h: 1.0 / (exp(-(V + 45.0) / 10.0) + 1.0)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          h: 0.6
+          alpha_h: 0.0
+          beta_h: 0.0
+    potassium_channel:
+      inputs:
+        time: REAL
+        V: REAL
+        E_R: REAL
+        n_private: REAL
+      outputs:
+        i_K: REAL
+        time_private: REAL
+        V_private: REAL
+      parameters:
+        g_K:
+          type: REAL
+          default: 36.0
+      locations:
+        q0:
+          update:
+            E_K: E_R - 12.0
+            i_K: g_K * (pow(n, 4.0)) * (V - E_K)
+            time_private: time
+            V_private: V
+            n: n_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_K: 0.0
+          E_K: 0.0
+          n: 0.0
+    potassium_channel_n_gate:
+      inputs:
+        V: REAL
+        time: REAL
+      outputs:
+        n: REAL
+      locations:
+        q0:
+          flow:
+            n: alpha_n * (1.0 - n) - beta_n * n
+          update:
+            alpha_n: (-0.01 * (V + 65.0)) / (exp(-(V + 65.0) / 10.0) - 1.0)
+            beta_n: 0.125 * exp((V + 75.0) / 80.0)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          n: 0.325
+          alpha_n: 0.0
+          beta_n: 0.0
+    leakage_current:
+      inputs:
+        time: REAL
+        V: REAL
+        E_R: REAL
+      outputs:
+        i_L: REAL
+      parameters:
+        g_L:
+          type: REAL
+          default: 0.3
+      locations:
+        q0:
+          update:
+            E_L: E_R + 10.613
+            i_L: g_L * (V - E_L)
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          i_L: 0.0
+          E_L: 0.0
+  instances:
+    environment: environment
+    membrane: membrane
+    sodium_channel: sodium_channel
+    sodium_channel_m_gate: sodium_channel_m_gate
+    sodium_channel_h_gate: sodium_channel_h_gate
+    potassium_channel: potassium_channel
+    potassium_channel_n_gate: potassium_channel_n_gate
+    leakage_current: leakage_current
+  mappings:
+    environment_time: environment.time
+    leakage_current_i_L: leakage_current.i_L
+    membrane_E_R: membrane.E_R
+    membrane_V: membrane.V
+    potassium_channel_V_private: potassium_channel.V_private
+    potassium_channel_i_K: potassium_channel.i_K
+    potassium_channel_n_gate_n: potassium_channel_n_gate.n
+    potassium_channel_time_private: potassium_channel.time_private
+    sodium_channel_V_private: sodium_channel.V_private
+    sodium_channel_h_gate_h: sodium_channel_h_gate.h
+    sodium_channel_i_Na: sodium_channel.i_Na
+    sodium_channel_m_gate_m: sodium_channel_m_gate.m
+    sodium_channel_time_private: sodium_channel.time_private
+    leakage_current.E_R: membrane.E_R
+    leakage_current.V: membrane.V
+    leakage_current.time: environment.time
+    membrane.i_K: potassium_channel.i_K
+    membrane.i_L: leakage_current.i_L
+    membrane.i_Na: sodium_channel.i_Na
+    membrane.time: environment.time
+    potassium_channel.E_R: membrane.E_R
+    potassium_channel.V: membrane.V
+    potassium_channel.n_private: potassium_channel_n_gate.n
+    potassium_channel.time: environment.time
+    potassium_channel_n_gate.V: potassium_channel.V_private
+    potassium_channel_n_gate.time: potassium_channel.time_private
+    sodium_channel.E_R: membrane.E_R
+    sodium_channel.V: membrane.V
+    sodium_channel.h_private: sodium_channel_h_gate.h
+    sodium_channel.m_private: sodium_channel_m_gate.m
+    sodium_channel.time: environment.time
+    sodium_channel_h_gate.V: sodium_channel.V_private
+    sodium_channel_h_gate.time: sodium_channel.time_private
+    sodium_channel_m_gate.V: sodium_channel.V_private
+    sodium_channel_m_gate.time: sodium_channel.time_private
+codegenConfig:
+  indentSize: 4
+  execution:
+    stepSize: 0.001
+    simulationTime: 10.0
+  logging:
+    enable: true
+    file: out.csv
+  parametrisationMethod: COMPILE_TIME
+  maximumInterTransitions: 1
+  requireOneIntraTransitionPerTick: false
+  ccodeSettings:
+    hasLoopAnnotations: false
+  runTimeParametrisation: false
+  compileTimeParametrisation: true

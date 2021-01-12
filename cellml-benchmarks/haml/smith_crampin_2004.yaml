@@ -1,0 +1,258 @@
+---
+name: smith_2004
+system:
+  outputs:
+    interface_time_private: REAL
+    interface_Vm_private: REAL
+    interface_cMgADP_private: REAL
+    interface_cNa_i_private: REAL
+    interface_v_cyc: REAL
+    interface_net_free_energy: REAL
+    NaK_pump_body_temp_private: REAL
+    NaK_pump_gas_const_private: REAL
+    NaK_pump_faraday_const_private: REAL
+    NaK_pump_Vm_private: REAL
+    NaK_pump_cMgADP_private: REAL
+    NaK_pump_cNa_i_private: REAL
+    NaK_pump_v_cyc: REAL
+    NaK_pump_net_free_energy: REAL
+  definitions:
+    interface:
+      inputs:
+        v_cyc_private: REAL
+        net_free_energy_private: REAL
+      outputs:
+        time_private: REAL
+        Vm_private: REAL
+        cMgADP_private: REAL
+        cNa_i_private: REAL
+        v_cyc: REAL
+        net_free_energy: REAL
+      locations:
+        q0:
+          flow:
+            Vm: 1.0
+            cMgADP: 0.0
+            cNa_i: 0.0
+            time: 1000.0
+          update:
+            time_private: time
+            Vm_private: Vm
+            cMgADP_private: cMgADP
+            cNa_i_private: cNa_i
+            v_cyc: v_cyc_private
+            net_free_energy: net_free_energy_private
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          time: 0.0
+          Vm: -150.0
+          cMgADP: 0.01
+          cNa_i: 50.0
+          v_cyc: 0.0
+          net_free_energy: 0.0
+    NaK_pump:
+      inputs:
+        Vm: REAL
+        cMgADP: REAL
+        cNa_i: REAL
+      outputs:
+        body_temp_private: REAL
+        gas_const_private: REAL
+        faraday_const_private: REAL
+        Vm_private: REAL
+        cMgADP_private: REAL
+        cNa_i_private: REAL
+        v_cyc: REAL
+        net_free_energy: REAL
+      parameters:
+        body_temp:
+          type: REAL
+          default: 310.0
+        gas_const:
+          type: REAL
+          default: 8.314
+        faraday_const:
+          type: REAL
+          default: 96485.0
+        k1:
+          type: REAL
+          default: 1050.0
+        minus_k1:
+          type: REAL
+          default: 172.1
+        k2:
+          type: REAL
+          default: 481.0
+        minus_k2:
+          type: REAL
+          default: 40.1
+        k3:
+          type: REAL
+          default: 2000.0
+        minus_k3:
+          type: REAL
+          default: 79287.1
+        k4:
+          type: REAL
+          default: 320.0
+        minus_k4:
+          type: REAL
+          default: 40.1
+        eq_Na_base_e:
+          type: REAL
+          default: 15.5
+        eq_Na_base_i:
+          type: REAL
+          default: 2.49
+        eq_K_e:
+          type: REAL
+          default: 0.213
+        eq_K_i:
+          type: REAL
+          default: 0.5
+        eq_MgATP:
+          type: REAL
+          default: 2.51
+        eq_HPi:
+          type: REAL
+          default: 1.69E-4
+        eq_KPi:
+          type: REAL
+          default: 292.0
+        eq_NaPi:
+          type: REAL
+          default: 224.0
+        cNa_e:
+          type: REAL
+          default: 150.0
+        cK_e:
+          type: REAL
+          default: 5.4
+        cK_i:
+          type: REAL
+          default: 140.0
+        cMgATP:
+          type: REAL
+          default: 9.8
+        cPi_sum:
+          type: REAL
+          default: 4.2
+        cH:
+          type: REAL
+          default: 8.1283E-5
+        partition_factor:
+          type: REAL
+          default: -0.031288692380984445
+      locations:
+        q0:
+          update:
+            cPi: cPi_sum / (1.0 + cK_i / eq_KPi + cH / eq_HPi + cNa_i / eq_NaPi)
+            dG_Na: gas_const * body_temp * ln(cNa_e / cNa_i) - faraday_const * 0.001
+              * Vm * 0.001
+            dG_K: gas_const * body_temp * ln(cK_i / cK_e) + faraday_const * 0.001
+              * Vm * 0.001
+            dG_pump: 2.0 * dG_K + 3.0 * dG_Na
+            dG_ATP: -29600.0 - gas_const * body_temp * ln(cMgATP / (0.001 * cMgADP
+              * cPi))
+            net_free_energy: dG_ATP + dG_pump
+            dimless_Na_i: cNa_i / (eq_Na_base_i * exp((partition_factor * faraday_const
+              * 0.001 * Vm) / (3.0 * gas_const * body_temp)))
+            dimless_Na_e: cNa_e / (eq_Na_base_e * exp(((1.0 + partition_factor) *
+              faraday_const * 0.001 * Vm) / (3.0 * gas_const * body_temp)))
+            dimless_K_i: cK_i / eq_K_i
+            dimless_K_e: cK_e / eq_K_e
+            dimless_MgATP: cMgATP / eq_MgATP
+            alpha1: (k1 * (pow(dimless_Na_i, 3.0))) / ((pow(1.0 + dimless_Na_i, 3.0)
+              + pow(1.0 + dimless_K_i, 2.0)) - 1.0)
+            alpha2: k2
+            alpha3: (k3 * (pow(dimless_K_e, 2.0))) / ((pow(1.0 + dimless_Na_e, 3.0)
+              + pow(1.0 + dimless_K_e, 2.0)) - 1.0)
+            alpha4: (k4 * dimless_MgATP) / (1.0 + dimless_MgATP)
+            minus_alpha1: minus_k1 * cMgADP * 1.0000000000000002
+            minus_alpha2: (minus_k2 * (pow(dimless_Na_e, 3.0))) / ((pow(1.0 + dimless_Na_e,
+              3.0) + pow(1.0 + dimless_K_e, 2.0)) - 1.0)
+            minus_alpha3: ((minus_k3 * cPi * cH) / (1.0 + dimless_MgATP)) * 1.0000000000000002
+            minus_alpha4: (minus_k4 * (pow(dimless_K_i, 2.0))) / ((pow(1.0 + dimless_Na_i,
+              3.0) + pow(1.0 + dimless_K_i, 2.0)) - 1.0)
+            diagram_sum: minus_alpha3 * minus_alpha2 * minus_alpha1 + alpha4 * minus_alpha2
+              * minus_alpha1 + alpha4 * alpha2 * alpha3 + alpha4 * minus_alpha1 *
+              alpha3 + minus_alpha3 * minus_alpha2 * alpha1 + alpha4 * minus_alpha2
+              * alpha1 + alpha4 * alpha1 * alpha3 + minus_alpha3 * alpha1 * alpha2
+              + alpha4 * alpha1 * alpha2 + alpha1 * alpha2 * alpha3 + minus_alpha4
+              * minus_alpha3 * minus_alpha1 + minus_alpha4 * minus_alpha3 * alpha2
+              + minus_alpha4 * minus_alpha3 * minus_alpha2 + minus_alpha4 * minus_alpha1
+              * minus_alpha2 + minus_alpha4 * alpha2 * alpha3 + minus_alpha4 * minus_alpha1
+              * alpha3
+            v_cyc: (alpha1 * alpha2 * alpha3 * alpha4 - minus_alpha1 * minus_alpha2
+              * minus_alpha3 * minus_alpha4) / diagram_sum
+            body_temp_private: body_temp
+            gas_const_private: gas_const
+            faraday_const_private: faraday_const
+            Vm_private: Vm
+            cMgADP_private: cMgADP
+            cNa_i_private: cNa_i
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          dimless_Na_e: 0.0
+          dimless_Na_i: 0.0
+          dimless_K_e: 0.0
+          dimless_K_i: 0.0
+          dimless_MgATP: 0.0
+          alpha1: 0.0
+          alpha2: 0.0
+          alpha3: 0.0
+          alpha4: 0.0
+          minus_alpha1: 0.0
+          minus_alpha2: 0.0
+          minus_alpha3: 0.0
+          minus_alpha4: 0.0
+          cPi: 0.0
+          dG_Na: 0.0
+          dG_K: 0.0
+          dG_pump: 0.0
+          dG_ATP: 0.0
+          diagram_sum: 0.0
+          v_cyc: 0.0
+          net_free_energy: 0.0
+  instances:
+    interface: interface
+    NaK_pump: NaK_pump
+  mappings:
+    NaK_pump_Vm_private: NaK_pump.Vm_private
+    NaK_pump_body_temp_private: NaK_pump.body_temp_private
+    NaK_pump_cMgADP_private: NaK_pump.cMgADP_private
+    NaK_pump_cNa_i_private: NaK_pump.cNa_i_private
+    NaK_pump_faraday_const_private: NaK_pump.faraday_const_private
+    NaK_pump_gas_const_private: NaK_pump.gas_const_private
+    NaK_pump_net_free_energy: NaK_pump.net_free_energy
+    NaK_pump_v_cyc: NaK_pump.v_cyc
+    interface_Vm_private: interface.Vm_private
+    interface_cMgADP_private: interface.cMgADP_private
+    interface_cNa_i_private: interface.cNa_i_private
+    interface_net_free_energy: interface.net_free_energy
+    interface_time_private: interface.time_private
+    interface_v_cyc: interface.v_cyc
+    NaK_pump.Vm: interface.Vm_private
+    NaK_pump.cMgADP: interface.cMgADP_private
+    NaK_pump.cNa_i: interface.cNa_i_private
+    interface.net_free_energy_private: NaK_pump.net_free_energy
+    interface.v_cyc_private: NaK_pump.v_cyc
+codegenConfig:
+  indentSize: 4
+  execution:
+    stepSize: 0.001
+    simulationTime: 10.0
+  logging:
+    enable: true
+    file: out.csv
+  parametrisationMethod: COMPILE_TIME
+  maximumInterTransitions: 1
+  requireOneIntraTransitionPerTick: false
+  ccodeSettings:
+    hasLoopAnnotations: false
+  runTimeParametrisation: false
+  compileTimeParametrisation: true

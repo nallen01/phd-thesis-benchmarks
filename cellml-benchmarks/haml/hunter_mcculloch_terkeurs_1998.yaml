@@ -1,0 +1,210 @@
+---
+name: hunter_mcculloch_terkeurs_1998_version02
+system:
+  outputs:
+    environment_time: REAL
+    calcium_transient_Ca_i: REAL
+    TnC_Ca_binding_kinetics_Ca_b: REAL
+    TnC_Ca_binding_kinetics_lambda: REAL
+    thin_filament_kinetics_To: REAL
+    crossbridge_kinetics_T: REAL
+  definitions:
+    environment:
+      outputs:
+        time: REAL
+      locations:
+        q0:
+          flow:
+            time: 1.0
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          time: 0.0
+    calcium_transient:
+      inputs:
+        time: REAL
+      outputs:
+        Ca_i: REAL
+      parameters:
+        Ca_max:
+          type: REAL
+          default: 1.0
+        tau_Ca:
+          type: REAL
+          default: 0.06
+        Ca_o:
+          type: REAL
+          default: 0.01
+      locations:
+        q0:
+          flow:
+            Ca_i: 1.0 * (Ca_o + (Ca_max - Ca_o) * (time / tau_Ca) * exp((1.0 - time)
+              / tau_Ca))
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          Ca_i: 10.0
+    TnC_Ca_binding_kinetics:
+      inputs:
+        time: REAL
+        Ca_i: REAL
+        To: REAL
+        T: REAL
+      outputs:
+        Ca_b: REAL
+        lambda: REAL
+      parameters:
+        Ca_b_max:
+          type: REAL
+          default: 2.26
+        rho_0:
+          type: REAL
+          default: 100.0
+        rho_1:
+          type: REAL
+          default: 163.0
+      locations:
+        q0:
+          flow:
+            Ca_b: rho_0 * Ca_i * (Ca_b_max - Ca_b) - rho_1 * Ca_b * (1.0 - T / (lambda
+              * To))
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          Ca_b: 0.0
+          lambda: 2.6
+    thin_filament_kinetics:
+      inputs:
+        time: REAL
+        Ca_b: REAL
+        lambda: REAL
+      outputs:
+        To: REAL
+      parameters:
+        C_50:
+          type: REAL
+          default: 1.0
+        pC_50_ref:
+          type: REAL
+          default: 6.2
+        n_ref:
+          type: REAL
+          default: 6.9
+        alpha_0:
+          type: REAL
+          default: 2.0
+        T_ref:
+          type: REAL
+          default: 100.0
+        beta_0:
+          type: REAL
+          default: 1.45
+        beta_1:
+          type: REAL
+          default: 1.95
+        beta_2:
+          type: REAL
+          default: 0.31
+      locations:
+        q0:
+          flow:
+            z: alpha_0 * ((pow(Ca_b / C_50, n)) * (1.0 - z) - z)
+          update:
+            To: T_ref * (1.0 + beta_0 * (lambda - 1.0)) * z
+            n: n_ref * (1.0 + beta_1 * (lambda - 1.0))
+            pC_50: pC_50_ref * (1.0 + beta_2 * (lambda - 1.0))
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          To: 0.0
+          z: 0.0
+          pC_50: 0.0
+          n: 4.5
+    crossbridge_kinetics:
+      inputs:
+        time: REAL
+        To: REAL
+      outputs:
+        T: REAL
+      parameters:
+        a:
+          type: REAL
+          default: 0.5
+        A1:
+          type: REAL
+          default: 50.0
+        A2:
+          type: REAL
+          default: 175.0
+        A3:
+          type: REAL
+          default: 175.0
+        alpha_1:
+          type: REAL
+          default: 33.0
+        alpha_2:
+          type: REAL
+          default: 2850.0
+        alpha_3:
+          type: REAL
+          default: 2850.0
+        tau:
+          type: REAL
+          default: 0.0
+      locations:
+        q0:
+          update:
+            dlambda_dt: (alpha_1 / A1) * ((T / To - 1.0) / (T / To + a))
+            T: To * ((1.0 + a * Q) / (1.0 - Q))
+            Q: A1 * exp(-alpha_1 * (time - tau)) * dlambda_dt * tau + A2 * exp(-alpha_2
+              * (time - tau)) * dlambda_dt * tau + A3 * exp(-alpha_3 * (time - tau))
+              * dlambda_dt * tau
+          transitions: []
+      initialisation:
+        state: q0
+        valuations:
+          T: 0.0
+          Q: 0.0
+          dlambda_dt: 0.0
+  instances:
+    environment: environment
+    calcium_transient: calcium_transient
+    TnC_Ca_binding_kinetics: TnC_Ca_binding_kinetics
+    thin_filament_kinetics: thin_filament_kinetics
+    crossbridge_kinetics: crossbridge_kinetics
+  mappings:
+    TnC_Ca_binding_kinetics_Ca_b: TnC_Ca_binding_kinetics.Ca_b
+    TnC_Ca_binding_kinetics_lambda: TnC_Ca_binding_kinetics.lambda
+    calcium_transient_Ca_i: calcium_transient.Ca_i
+    crossbridge_kinetics_T: crossbridge_kinetics.T
+    environment_time: environment.time
+    thin_filament_kinetics_To: thin_filament_kinetics.To
+    TnC_Ca_binding_kinetics.Ca_i: calcium_transient.Ca_i
+    TnC_Ca_binding_kinetics.T: crossbridge_kinetics.T
+    TnC_Ca_binding_kinetics.To: thin_filament_kinetics.To
+    TnC_Ca_binding_kinetics.time: environment.time
+    calcium_transient.time: environment.time
+    crossbridge_kinetics.To: thin_filament_kinetics.To
+    crossbridge_kinetics.time: environment.time
+    thin_filament_kinetics.Ca_b: TnC_Ca_binding_kinetics.Ca_b
+    thin_filament_kinetics.lambda: TnC_Ca_binding_kinetics.lambda
+    thin_filament_kinetics.time: environment.time
+codegenConfig:
+  indentSize: 4
+  execution:
+    stepSize: 0.001
+    simulationTime: 10.0
+  logging:
+    enable: true
+    file: out.csv
+  parametrisationMethod: COMPILE_TIME
+  maximumInterTransitions: 1
+  requireOneIntraTransitionPerTick: false
+  ccodeSettings:
+    hasLoopAnnotations: false
+  runTimeParametrisation: false
+  compileTimeParametrisation: true
